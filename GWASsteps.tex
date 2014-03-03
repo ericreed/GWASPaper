@@ -1,0 +1,362 @@
+\documentclass[11pt]{article}\usepackage[]{graphicx}\usepackage[]{color}
+%% maxwidth is the original width if it is less than linewidth
+%% otherwise use linewidth (to make sure the graphics do not exceed the margin)
+\makeatletter
+\def\maxwidth{ %
+  \ifdim\Gin@nat@width>\linewidth
+    \linewidth
+  \else
+    \Gin@nat@width
+  \fi
+}
+\makeatother
+
+\definecolor{fgcolor}{rgb}{0.345, 0.345, 0.345}
+\newcommand{\hlnum}[1]{\textcolor[rgb]{0.686,0.059,0.569}{#1}}%
+\newcommand{\hlstr}[1]{\textcolor[rgb]{0.192,0.494,0.8}{#1}}%
+\newcommand{\hlcom}[1]{\textcolor[rgb]{0.678,0.584,0.686}{\textit{#1}}}%
+\newcommand{\hlopt}[1]{\textcolor[rgb]{0,0,0}{#1}}%
+\newcommand{\hlstd}[1]{\textcolor[rgb]{0.345,0.345,0.345}{#1}}%
+\newcommand{\hlkwa}[1]{\textcolor[rgb]{0.161,0.373,0.58}{\textbf{#1}}}%
+\newcommand{\hlkwb}[1]{\textcolor[rgb]{0.69,0.353,0.396}{#1}}%
+\newcommand{\hlkwc}[1]{\textcolor[rgb]{0.333,0.667,0.333}{#1}}%
+\newcommand{\hlkwd}[1]{\textcolor[rgb]{0.737,0.353,0.396}{\textbf{#1}}}%
+
+\usepackage{framed}
+\makeatletter
+\newenvironment{kframe}{%
+ \def\at@end@of@kframe{}%
+ \ifinner\ifhmode%
+  \def\at@end@of@kframe{\end{minipage}}%
+  \begin{minipage}{\columnwidth}%
+ \fi\fi%
+ \def\FrameCommand##1{\hskip\@totalleftmargin \hskip-\fboxsep
+ \colorbox{shadecolor}{##1}\hskip-\fboxsep
+     % There is no \\@totalrightmargin, so:
+     \hskip-\linewidth \hskip-\@totalleftmargin \hskip\columnwidth}%
+ \MakeFramed {\advance\hsize-\width
+   \@totalleftmargin\z@ \linewidth\hsize
+   \@setminipage}}%
+ {\par\unskip\endMakeFramed%
+ \at@end@of@kframe}
+\makeatother
+
+\definecolor{shadecolor}{rgb}{.97, .97, .97}
+\definecolor{messagecolor}{rgb}{0, 0, 0}
+\definecolor{warningcolor}{rgb}{1, 0, 1}
+\definecolor{errorcolor}{rgb}{1, 0, 0}
+\newenvironment{knitrout}{}{} % an empty environment to be redefined in TeX
+
+\usepackage{alltt}
+
+% margins, size, formatting
+
+\oddsidemargin=0in
+\evensidemargin=0in
+\topmargin=0in
+%\textwidth=6.5in
+%\textheight=9.5in
+\parindent = 0 in
+\pagestyle{plain}
+
+\usepackage{amsmath,amssymb,amsthm, amsfonts}
+\usepackage{array}
+\usepackage{fancyhdr}
+\usepackage{geometry}
+\pagestyle{fancy}
+\usepackage{graphicx}
+
+
+
+\lhead{\textbf{GWAS Analysis\\ February 2014}}
+\rhead{\textbf{Emily Ramos\\ Eric Reed}}
+\cfoot{}
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+
+\begin{document}
+
+This document provides the steps necessary to run a Genome Wide Association Study (GWAS) analysis.
+\section{Introduction}
+\section{Data Files and Pre-Processing}
+
+To analyize the Plink files ($.bim$, $.fam$, $.bed$) in R, the "snpStats" package is required.
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlkwd{source}\hlstd{(}\hlstr{"http://bioconductor.org/biocLite.R"}\hlstd{)}
+\hlkwd{biocLite}\hlstd{(}\hlstr{"snpStats"}\hlstd{)}
+\hlkwd{library}\hlstd{(snpStats)}
+\end{alltt}
+\end{kframe}
+\end{knitrout}
+
+\subsection{Data Files}
+\subsection*{The .fam File}
+The .fam file is a matrix that identifies each study participant. It contains 6 columns which identify each individual by ``Family ID Number", ``Sample ID Number",``Paternal ID Number", ``Maternal ID Number", ``Sex", and ``Phenotype".  There are $n$ rows, one for each individual. Note that not all of these columns may contain information depending on the nature of the data collected and the strategies for analysis. In the example to follow, a separate phenotype file will be read in, containing quantified phenotype data.
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlstd{genoFam} \hlkwb{<-} \hlkwd{read.table}\hlstd{(}\hlstr{"genodata.fam"}\hlstd{)}
+\hlkwd{colnames}\hlstd{(genoFam)} \hlkwb{=} \hlkwd{c}\hlstd{(}\hlstr{"FamID"}\hlstd{,} \hlstr{"IndID"}\hlstd{,} \hlstr{"PatID"}\hlstd{,} \hlstr{"MatID"}\hlstd{,} \hlstr{"sex"}\hlstd{,} \hlstr{"phenotype"}\hlstd{)}
+\end{alltt}
+\end{kframe}
+\end{knitrout}
+
+\subsection*{The .bim File}
+The .bim file is a matrix that provides information about each SNP in our study.  There are 6 colums that contain information for the ``Chromosome Number", ``rsNumber", ``Genetic Distance", ``Position ID", ``Allele 1", ``Allele 2".  There are $n$ rows, one for each SNP in the analysis.
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlstd{genoBim} \hlkwb{<-} \hlkwd{read.table}\hlstd{(}\hlstr{"genodata.bim"}\hlstd{)}
+\hlkwd{colnames}\hlstd{(genoBim)} \hlkwb{=} \hlkwd{c}\hlstd{(}\hlstr{"chr"}\hlstd{,} \hlstr{"SNP"}\hlstd{,} \hlstr{"GenDist"}\hlstd{,} \hlstr{"BPPos"}\hlstd{,} \hlstr{"g1"}\hlstd{,} \hlstr{"g2"}\hlstd{)}
+\hlstd{genoBim}\hlopt{$}\hlstd{SNP} \hlkwb{<-} \hlkwd{as.character}\hlstd{(genoBim}\hlopt{$}\hlstd{SNP)}
+\end{alltt}
+\end{kframe}
+\end{knitrout}
+
+\subsection*{The .bed File}
+The .bed file is a matrix that contains the genotypic data in binary format. It's the result of the conversion of .ped and .map files, by the PLINK software. This is the largest of the three files because it contains every SNP in the study, as well as the genotype at this snp for each individual. In order to interpret the binary data, we need to employ the ``read.plink()" function, from the ``snpStats" package, to read in the .fam, .bim, and .bed functions together, and to interpret the binary data in the .bed file and put it into the proper format.  The output will be the``genotype", list object, which contains a matrix $p$ columns, one for each SNP by ``rsNumber", and $n$ rows, one for each study participant by ``Family ID Number", containing the genotype of each study participant, at each individual SNP, as either ``01", ``02", and ``03", stored as ``raw" data.
+
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlstd{geno} \hlkwb{<-} \hlkwd{read.plink}\hlstd{(}\hlstr{"genodata.bed"}\hlstd{,} \hlstr{"genodata.bim"}\hlstd{,} \hlstr{"genodata.fam"}\hlstd{)}\hlopt{$}\hlstd{genotype}
+\end{alltt}
+\end{kframe}
+\end{knitrout}
+
+Our final genotype (``genoNum") matrix contains the genotype for each individual at each individual SNP, stored as either the number of Major or Minor alleles, depending on how the data was originally formatted.  For example, if the data was formatted to count the number of major alleles, the meaning of the genotype data is coded as follows:
+
+\begin{itemize}
+  \item 0 $=$ Homozygous Recessive
+  \item 1 $=$ Heterozygous
+  \item 2 $=$ Homozygous Dominant
+\end{itemize}
+
+Make a table one of the columns to make sure the data is formatted correctly.
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlkwd{table}\hlstd{(genoNum[,} \hlnum{1}\hlstd{])}
+\end{alltt}
+\end{kframe}
+\end{knitrout}
+
+\subsection*{The Phenotype File}
+The phenotype file contains a matrix, with the phenotype variables as columns and the participant IDs as the unit of observation.
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlstd{pheno} \hlkwb{<-} \hlkwd{read.csv}\hlstd{(}\hlstr{"phenopathway.csv"}\hlstd{)}
+\end{alltt}
+\end{kframe}
+\end{knitrout}
+
+
+Only phenotypes of patients who have genotype data should be included in the genotype file.
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlstd{phenoSub} \hlkwb{<-} \hlstd{pheno[pheno}\hlopt{$}\hlstd{rpid} \hlopt{%in%} \hlstd{geno.fam}\hlopt{$}\hlstd{FamID, ]}
+\end{alltt}
+\end{kframe}
+\end{knitrout}
+
+
+In order to merge the princple components with the phenotype file, we must first attach participant IDs to the Princple Components.
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlstd{pcs} \hlkwb{<-} \hlkwd{data.frame}\hlstd{(}\hlkwc{rpid} \hlstd{= genoFam}\hlopt{$}\hlstd{FamID, pcs)}
+\end{alltt}
+\end{kframe}
+\end{knitrout}
+
+
+We can now merge the two sets of data.
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlstd{phenoSub} \hlkwb{<-} \hlkwd{merge}\hlstd{(phenoSub, pcs,} \hlkwc{by.x} \hlstd{=} \hlstr{"rpid"}\hlstd{,} \hlkwc{by.y} \hlstd{=} \hlstr{"rpid"}\hlstd{,} \hlkwc{all.x} \hlstd{=} \hlnum{TRUE}\hlstd{)}
+\end{alltt}
+\end{kframe}
+\end{knitrout}
+
+
+\subsection{SNP Level Filtering}
+The ``snpStats" package will allow us to perform analysis on the raw ``geno" file.  We will use the ``col.summary()" function, which will produce a matrix with values for a variety of summary analyses at each SNP.
+This we will allow us to filter our data based on a certain set criteria.  For this study we have chosen to filter our data as follows: 
+\subsubsection*{Call Rate}
+The call rate is the most straight forward of the three criteria, as it means to only keep that have genotype data above a certain threshold. In the following example we chose a call rate of 90 \%.  This is essentially stating that we only want to keep the SNPs for which there is data for more than or equal 90\% of the study particpants, or for which there is missing data for less than or equal to 10\% of the study participants.
+\subsubsection*{Minor Allele Frequency}
+If every study participant is homozygous at a given SNP, than there is nothing to infer about the relationship between genotype and phenotype, as each participant has the same genotype at this SNP.  This is a common occurence with the major allele, as it is often much more common in a given population.  Therefore, we it is important to keep only the SNPs for which we have a certain proportion of minor alleles present in the study sample.  In the example to follow we will use a Minor Allele Frequency, that will remove SNPs for which the minor allele frequency is less than 1 \%.
+\subsubsection*{Hardy-Weinberg Equilibrium}
+The Hardy-Weingberg Equilibrium is based off the principal that if two alleles are possible for a given genotype, then the sum of the probabilities of recieving each allele is 1.
+\centerline{$p+q=1$}
+Given the frequency of a certain allele we can, therfore, not only predict the frequency of the other allele, but also the proportion of homozygous recessive, heterozygous, and homozygous dominant individuals in a population. If violated can assume that there was a possible genotyping error, and we must remove the data for this SNP. We can't expect our samples to exhibit this principle perfectly, however we can calculate the p-value that this principle is being followed, and set a threshold to keep only data with Hardy-Weinberg equlibrium p-values below a certain p-value. In the example to follow we have chosen a p-value of 0.001.
+
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlstd{call} \hlkwb{<-} \hlnum{0.9}
+\hlstd{minor} \hlkwb{<-} \hlnum{0.01}
+\hlstd{hardy} \hlkwb{<-} \hlnum{0.001}
+\hlstd{snpsum.col} \hlkwb{<-} \hlkwd{col.summary}\hlstd{(geno)}
+\hlstd{use} \hlkwb{<-} \hlstd{(}\hlopt{!}\hlkwd{is.na}\hlstd{(snpsum.col}\hlopt{$}\hlstd{MAF)} \hlopt{&} \hlstd{snpsum.col}\hlopt{$}\hlstd{MAF} \hlopt{>} \hlstd{minor)} \hlopt{&} \hlstd{(}\hlopt{!}\hlkwd{is.na}\hlstd{(snpsum.col}\hlopt{$}\hlstd{z.HWE)} \hlopt{&}
+    \hlstd{snpsum.col}\hlopt{$}\hlstd{z.HWE}\hlopt{^}\hlnum{2} \hlopt{<} \hlkwd{qnorm}\hlstd{(hardy}\hlopt{/}\hlnum{2}\hlstd{)}\hlopt{^}\hlnum{2}\hlstd{)} \hlopt{&} \hlstd{snpsum.col}\hlopt{$}\hlstd{Call.rate} \hlopt{>=} \hlstd{call}  \hlcom{#This creates a Boolean Vector of 'TRUE' and 'FALSE'}
+\hlstd{use[}\hlkwd{is.na}\hlstd{(use)]} \hlkwb{<-} \hlnum{FALSE}
+\hlstd{genoBim} \hlkwb{<-} \hlstd{genoBim[use, ]}  \hlcom{#This will filter the .bim file}
+\hlstd{geno} \hlkwb{<-} \hlstd{geno[, use]}  \hlcom{#This will filter our genotype file.}
+\end{alltt}
+\end{kframe}
+\end{knitrout}
+
+
+\subsubsection*{Formatting the Genotype File}
+Once we have filtered our data using the formatting necessary for the ``snpStats" package we will need to convert our genotype file into a matrix in numeric format.
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlstd{genoNum} \hlkwb{<-} \hlkwd{as}\hlstd{(geno,} \hlstr{"numeric"}\hlstd{)}
+\end{alltt}
+\end{kframe}
+\end{knitrout}
+
+
+\subsection{Principal Components}
+Principal Component (PC) Analysis is performed on the genotype data and the first ten PCs are retained as predictors in the model to account for population substructure.
+\\ 
+The PC analysis begins by calculating the genetic covariance matrix, correlation coefficients between sample loadings (*not sure what sample loadings are) and genotypes for each SNP, SNP eigenvectors (loadings) and estimate the sample loadings from specified SNP eigenvectors.
+\\ These ten principal components are retained in a vector ``pcs". In later steps, this vector will be merged into the phenotype file and used for adjusting our phenotype variable when performing linear regression for each SNP.
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlstd{num.princ.comp} \hlkwb{<-} \hlnum{10}
+\end{alltt}
+\end{kframe}
+\end{knitrout}
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlstd{xxmat} \hlkwb{<-} \hlkwd{xxt}\hlstd{(geno,} \hlkwc{correct.for.missing} \hlstd{=} \hlnum{FALSE}\hlstd{)}
+\hlstd{evv} \hlkwb{<-} \hlkwd{eigen}\hlstd{(xxmat,} \hlkwc{symmetric} \hlstd{=} \hlnum{TRUE}\hlstd{)}
+\hlstd{pcs} \hlkwb{<-} \hlstd{evv}\hlopt{$}\hlstd{vectors[,} \hlnum{1}\hlopt{:}\hlstd{num.princ.comp]}
+\hlstd{evals} \hlkwb{<-} \hlstd{evv}\hlopt{$}\hlstd{values[}\hlnum{1}\hlopt{:}\hlstd{num.princ.comp]}
+\hlstd{btr} \hlkwb{<-} \hlkwd{snp.pre.multiply}\hlstd{(geno,} \hlkwd{diag}\hlstd{(}\hlnum{1}\hlopt{/}\hlkwd{sqrt}\hlstd{(evals))} \hlopt{%*%} \hlkwd{t}\hlstd{(pcs))}
+\hlstd{pcs} \hlkwb{<-} \hlkwd{snp.post.multiply}\hlstd{(geno,} \hlkwd{t}\hlstd{(btr))}
+\hlkwd{colnames}\hlstd{(pcs)} \hlkwb{<-} \hlkwd{paste}\hlstd{(}\hlstr{"pc"}\hlstd{,} \hlnum{1}\hlopt{:}\hlstd{num.princ.comp,} \hlkwc{sep} \hlstd{=} \hlstr{""}\hlstd{)}
+\hlkwd{save.image}\hlstd{(}\hlstr{"/project/cricsnp/greg.files/CRIC_GWAS_white.RData"}\hlstd{)}
+\hlkwd{rm}\hlstd{(xxmat)}
+\end{alltt}
+\end{kframe}
+\end{knitrout}
+
+
+\section{GWAS Analysis}
+
+To run the linear regression on our data, we first need to install the ``parallel" package to be able to run a parallel analysis, an analysis on multiple cores.
+l
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlkwd{library}\hlstd{(parallel)}
+\hlkwd{load}\hlstd{(}\hlstr{"/home/ramoser/correct_phase3.Rdata"}\hlstd{)}
+\end{alltt}
+\end{kframe}
+\end{knitrout}
+
+
+We create a GWAS function that will run our analysis. This function takes a subset of our data ``tempSNP" of ID numbers and RS Numbers. The linear regression model compares our filtered and merged dataset (in this case we are running an analysis on our baseline data) and adjusting for the variables of interest: 
+The ``a" matrix contains the SNP genotype on the x-axis and the phenotype on the y-axis. This function then maps the regression model for the filtered, merged dataset (in this case we are running an analysis on our baseline data) and adjusting for the variables of interest: Age, Sex, Race, the ten PCs and SNPs. The ``out" matrix pulls just the row that contains the estimate for the SNP from the linear model summary. 
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlstd{ldlGWAS} \hlkwb{<-} \hlkwa{function}\hlstd{(}\hlkwc{rsNumber}\hlstd{) \{}
+    \hlkwd{print}\hlstd{(rsNumber)}
+    \hlstd{tempSNP} \hlkwb{<-} \hlkwd{data.frame}\hlstd{(}\hlkwc{rpid} \hlstd{=} \hlkwd{row.names}\hlstd{(genoNum),} \hlkwc{snp} \hlstd{= genoNum[, rsNumber])}
+    \hlstd{dat} \hlkwb{<-} \hlkwd{merge}\hlstd{(phenoSub, tempSNP,} \hlkwc{by.x} \hlstd{=} \hlstr{"rpid"}\hlstd{,} \hlkwc{by.y} \hlstd{=} \hlstr{"rpid"}\hlstd{,} \hlkwc{all.x} \hlstd{=} \hlnum{TRUE}\hlstd{)}
+    \hlstd{a} \hlkwb{<-} \hlkwd{summary}\hlstd{(}\hlkwd{lm}\hlstd{(fldl_wk0} \hlopt{~} \hlstd{age} \hlopt{+} \hlstd{sex} \hlopt{+} \hlstd{raceth} \hlopt{+} \hlstd{pc1} \hlopt{+} \hlstd{pc2} \hlopt{+} \hlstd{pc3} \hlopt{+} \hlstd{pc4} \hlopt{+}
+        \hlstd{pc5} \hlopt{+} \hlstd{pc6} \hlopt{+} \hlstd{pc7} \hlopt{+} \hlstd{pc8} \hlopt{+} \hlstd{pc9} \hlopt{+} \hlstd{pc10} \hlopt{+} \hlstd{snp,} \hlkwc{data} \hlstd{= dat))}
+    \hlstd{out} \hlkwb{<-} \hlkwd{as.matrix}\hlstd{(a}\hlopt{$}\hlstd{coefficients[}\hlstr{"snp"}\hlstd{, ])}
+    \hlstd{out}
+\hlstd{\}}
+\end{alltt}
+\end{kframe}
+\end{knitrout}
+
+
+Next, we create a column of Genotype Numbers and remove SNP's that cause errors in our analysis.
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlstd{rsVec} \hlkwb{<-} \hlkwd{as.matrix}\hlstd{(}\hlkwd{colnames}\hlstd{(genoNum))}
+\hlstd{rsVec} \hlkwb{<-} \hlstd{rsVec[}\hlopt{-}\hlkwd{c}\hlstd{(}\hlnum{834037}\hlstd{,} \hlnum{834038}\hlstd{,} \hlnum{834039}\hlstd{,} \hlnum{834040}\hlstd{,} \hlnum{834042}\hlstd{,} \hlnum{834043}\hlstd{,} \hlnum{834046}\hlstd{), ]}
+\end{alltt}
+\end{kframe}
+\end{knitrout}
+
+
+We use ``mcapply()" to run parallel analysis on 8 different cores to save time. Since ``mcapply()" must analyze a list, we first make ``rsVec" into a list. After running the analysis, we put the data back together.
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlstd{rsVec} \hlkwb{<-} \hlkwd{as.list}\hlstd{(rsVec)}
+\hlstd{start} \hlkwb{<-} \hlkwd{Sys.time}\hlstd{()}
+\hlstd{aa} \hlkwb{<-} \hlkwd{mclapply}\hlstd{(rsVec, ldlGWAS,} \hlkwc{mc.cores} \hlstd{=} \hlnum{8}\hlstd{)}
+\hlstd{out} \hlkwb{<-} \hlkwd{do.call}\hlstd{(cbind, aa)}
+\hlstd{fldl_wk0_p3} \hlkwb{<-} \hlkwd{data.frame}\hlstd{(}\hlkwd{t}\hlstd{(out))}
+\end{alltt}
+\end{kframe}
+\end{knitrout}
+
+
+
+After analysis, We have a new dataset that we write to a file that contains rsNumber, Estimate, Standard Error, Zvalues and Pvalues
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlkwd{names}\hlstd{(fldl_wk0_p3)} \hlkwb{<-} \hlkwd{c}\hlstd{(}\hlstr{"Estimate"}\hlstd{,} \hlstr{"SE"}\hlstd{,} \hlstr{"Zvalue"}\hlstd{,} \hlstr{"Pvalue"}\hlstd{)}
+\hlstd{fldl_wk0_p3}\hlopt{$}\hlstd{rsNumber} \hlkwb{<-} \hlstd{rsVec}
+\hlstd{fldl_wk0_p3} \hlkwb{<-} \hlkwd{as.matrix}\hlstd{(fldl_wk0_p3)}
+\hlkwd{write.csv}\hlstd{(fldl_wk0_p3,} \hlstr{"/home/ramoser/fldl_wk0_p3"}\hlstd{)}
+\end{alltt}
+\end{kframe}
+\end{knitrout}
+
+
+We can now sort the results by p-value to find our strongest associations.
+
+%<<pvalues>>=
+%fldlwk0<-read.csv("/Users/Eric/Desktop/RA/fldlwk0GWAS")
+%wk0bypval<-fldlwk0[order(fldlwk0$Pvalue),]
+%wk0bypval<-wk0bypval[,-c(1,3,12)] #This is to remove numbered columns added by saving as a ".csv" file
+%wk0bypval[1:10,]
+%@
+
+From this GWAS we can see a high level of association between baseline LDL and snp rsNumber, rs7412, on the APOE gene, with a p-value of 2.69e-12.
+
+*I'm not sure how to finish.  I think we should go on to discuss the shear number of analysis we are running and how the Bonferroni correction returns p-value threshold of:
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlnum{0.05}\hlopt{/}\hlnum{834279}
+\end{alltt}
+\begin{verbatim}
+## [1] 5.993e-08
+\end{verbatim}
+\end{kframe}
+\end{knitrout}
+
+If we were to only go by this number we'd only associate high significance to rs7412.  This is where we could point to other analysis such as MixMAP.
+                                              
+
+\end{document}
