@@ -43,35 +43,24 @@ The .fam file is a matrix that identifies each study participant. It contains 6 
 genoFam<-read.table("genodata.fam");colnames(genoFam) = c("FamID","IndID","PatID","MatID","sex","phenotype")
 @
 \subsection*{The .bim File}
-The .bim file is a matrix that provides information about each SNP in our study.  There are 6 colums that contain information for the ``Chromosome Number", ``rsNumber", ``Genetic Distance", ``Position ID", ``Allele 1", ``Allele 2".  There are $n$ rows, one for each SNP in the analysis.
+The .bim file is a matrix that provides information about each SNP in our study.  There are 6 colums that contain information for the ``Chromosome Number", ``rsNumber", ``Genetic Distance", ``Position ID", ``Allele 1", ``Allele 2".  There are $n$ rows, one for each SNP in the analysis.  By default, the rsNumbers are read in as factor variables, and will be changed to character variables.
 <<eval=FALSE>>=
 genoBim <- read.table("genodata.bim");colnames(genoBim) = c("chr","SNP","GenDist","BPPos","g1","g2")
 genoBim$SNP <- as.character(genoBim$SNP)
 @
 \subsection*{The .bed File}
-The .bed file is a matrix that contains the genotypic data in binary format. It's the result of the conversion of .ped and .map files, by the PLINK software. This is the largest of the three files because it contains every SNP in the study, as well as the genotype at this snp for each individual. In order to interpret the binary data, we need to employ the ``read.plink()" function, from the ``snpStats" package, to read in the .fam, .bim, and .bed functions together, and to interpret the binary data in the .bed file and put it into the proper format.  The output will be the``genotype", list object, which contains a matrix $p$ columns, one for each SNP by ``rsNumber", and $n$ rows, one for each study participant by ``Family ID Number", containing the genotype of each study participant, at each individual SNP, as either ``01", ``02", and ``03", stored as ``raw" data.
+The .bed file is a matrix that contains the genotypic data in binary format. It's the result of the conversion of .ped and .map files by the PLINK software. This is the largest of the three files because it contains every SNP in the study, as well as the genotype at this snp for each individual. In order to interpret the binary data, we need to employ the ``read.plink()" function, from the ``snpStats" package, to read in the .fam, .bim, and .bed functions together, and to interpret the binary data in the .bed file and put it into the proper format. The  ``snpStats" package is an update of the ``snpMatrix" package, and creates a ``snpMatrix" object.  We will pull out the ``genotype" slot of this object, which contains the genotype data, stored as a matrix of $p$ columns, one for each SNP by ``rsNumber", and $n$ rows, one for each study participant by ``Family ID Number", containing the genotype of each study participant at each individual SNP, as either ``01", ``02", or ``03".
 
 
 <<eval=FALSE>>=
 geno<-read.plink("genodata.bed","genodata.bim","genodata.fam")$genotype
 @
-Our final genotype (``genoNum") matrix contains the genotype for each individual at each individual SNP, stored as either the number of Major or Minor alleles, depending on how the data was originally formatted.  For example, if the data was formatted to count the number of major alleles, the meaning of the genotype data is coded as follows:
 
-\begin{itemize}
-  \item 0 $=$ Homozygous Recessive
-  \item 1 $=$ Heterozygous
-  \item 2 $=$ Homozygous Dominant
-\end{itemize}
-
-Make a table one of the columns to make sure the data is formatted correctly.
-<<eval=FALSE>>=
-table(genoNum[,1])
-@
 \subsection*{The Phenotype File}
 The phenotype file contains a matrix, with the phenotype variables as columns and the participant IDs as the unit of observation.
 
 <<eval=FALSE>>=
-pheno<-read.csv("phenopathway.csv")
+pheno<-read.csv("phenodata.csv")
 @
 
 Only phenotypes of patients who have genotype data should be included in the genotype file.
@@ -118,12 +107,28 @@ Once we have filtered our data using the formatting necessary for the ``snpStats
 <<eval=FALSE>>=
 genoNum<-as(geno,"numeric")
 @
+Our final genotype (``genoNum") matrix contains the genotype for each individual at each individual SNP, stored as either the number of Major or Minor alleles, depending on how the data was originally formatted.  For example, if the data was formatted to count the number of major alleles, the meaning of the genotype data is coded as follows:
 
+\begin{itemize}
+  \item 0 $=$ Homozygous Recessive
+  \item 1 $=$ Heterozygous
+  \item 2 $=$ Homozygous Dominant
+\end{itemize}
+
+Make a table one of the columns to make sure the data is formatted correctly.
+<<eval=FALSE>>=
+table(genoNum[,1])
+@
 \subsection{Principal Components}
-Principal Component (PC) Analysis is performed on the genotype data and the first ten PCs are retained as predictors in the model to account for population substructure.
-\\ 
-The PC analysis begins by calculating the genetic covariance matrix, correlation coefficients between sample loadings (*not sure what sample loadings are) and genotypes for each SNP, SNP eigenvectors (loadings) and estimate the sample loadings from specified SNP eigenvectors.
-\\ These ten principal components are retained in a vector ``pcs". In later steps, this vector will be merged into the phenotype file and used for adjusting our phenotype variable when performing linear regression for each SNP.
+Principal Component Analysis (PCA) is commonly performed, as a means for adjusting for population substructure.  The goal is to account for as most of the genetic variation between the study participants.  This is vital to a GWAS because it allows us to account for varying allele frequencies among populations of various ethnic backgrounds, which could cause confounding, and produce false positive results.
+
+\textbf{If we want to report the number of PCs needed to account for 90\% of the variation I wrote the following code.  It suggests that 1020 PCs are needed of 1184 total.  10 PCs account for less than 1\% of the total variation.}
+<<eval=FALSE>>=
+pervar<-cumsum(evv$values)/sum(evv$values)
+var<-0.9
+pcs<-which(abs(pervar-var)==min(abs(pervar-var)))
+pcs
+@
 
 <<eval=FALSE>>=
 num.princ.comp<-10
@@ -136,7 +141,6 @@ evals <- evv$values[1:num.princ.comp]
 btr <- snp.pre.multiply(geno, diag(1/sqrt(evals)) %*% t(pcs))
 pcs <- snp.post.multiply(geno, t(btr))
 colnames(pcs) <- paste("pc",1:num.princ.comp,sep="")
-save.image("/project/cricsnp/greg.files/CRIC_GWAS_white.RData")
 rm(xxmat)
 @
 
