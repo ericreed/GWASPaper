@@ -225,10 +225,8 @@ Principal Component Analysis (PCA) is commonly performed, as a means for adjusti
 \begin{knitrout}
 \definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
 \begin{alltt}
-\hlstd{pervar} \hlkwb{<-} \hlkwd{cumsum}\hlstd{(evv}\hlopt{$}\hlstd{values)}\hlopt{/}\hlkwd{sum}\hlstd{(evv}\hlopt{$}\hlstd{values)}
-\hlstd{var} \hlkwb{<-} \hlnum{0.9}
-\hlstd{pcs} \hlkwb{<-} \hlkwd{which}\hlstd{(}\hlkwd{abs}\hlstd{(pervar} \hlopt{-} \hlstd{var)} \hlopt{==} \hlkwd{min}\hlstd{(}\hlkwd{abs}\hlstd{(pervar} \hlopt{-} \hlstd{var)))}
-\hlstd{pcs}
+\hlcom{# pervar<-cumsum(evv$values)/sum(evv$values) var<-0.9}
+\hlcom{# pcs<-which(abs(pervar-var)==min(abs(pervar-var))) pcs}
 \end{alltt}
 \end{kframe}
 \end{knitrout}
@@ -270,7 +268,6 @@ Next, we will merge the principal components with the phenotype file. In order t
 \section{GWAS Analysis}
 
 To run the linear regression on our data, we first need to install the ``parallel" package to be able to run a parallel analysis, an analysis on multiple cores.
-l
 \begin{knitrout}
 \definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
 \begin{alltt}
@@ -288,8 +285,8 @@ The ``a" matrix contains the SNP genotype on the x-axis and the phenotype on the
 \begin{alltt}
 \hlstd{ldlGWAS} \hlkwb{<-} \hlkwa{function}\hlstd{(}\hlkwc{rsNumber}\hlstd{) \{}
     \hlkwd{print}\hlstd{(rsNumber)}
-    \hlstd{tempSNP} \hlkwb{<-} \hlkwd{data.frame}\hlstd{(}\hlkwc{rpid} \hlstd{=} \hlkwd{row.names}\hlstd{(genoNum),} \hlkwc{snp} \hlstd{= genoNum[, rsNumber])}
-    \hlstd{dat} \hlkwb{<-} \hlkwd{merge}\hlstd{(phenoSub, tempSNP,} \hlkwc{by.x} \hlstd{=} \hlstr{"rpid"}\hlstd{,} \hlkwc{by.y} \hlstd{=} \hlstr{"rpid"}\hlstd{,} \hlkwc{all.x} \hlstd{=} \hlnum{TRUE}\hlstd{)}
+    \hlstd{tempSNP} \hlkwb{<-} \hlkwd{data.frame}\hlstd{(}\hlkwc{FamID} \hlstd{=} \hlkwd{row.names}\hlstd{(genoNum),} \hlkwc{snp} \hlstd{= genoNum[, rsNumber])}
+    \hlstd{dat} \hlkwb{<-} \hlkwd{merge}\hlstd{(phenoSub, tempSNP,} \hlkwc{by.x} \hlstd{=} \hlstr{"FamID"}\hlstd{,} \hlkwc{by.y} \hlstd{=} \hlstr{"FamID"}\hlstd{,} \hlkwc{all.x} \hlstd{=} \hlnum{TRUE}\hlstd{)}
     \hlstd{a} \hlkwb{<-} \hlkwd{summary}\hlstd{(}\hlkwd{lm}\hlstd{(fldl_wk0} \hlopt{~} \hlstd{age} \hlopt{+} \hlstd{sex} \hlopt{+} \hlstd{raceth} \hlopt{+} \hlstd{pc1} \hlopt{+} \hlstd{pc2} \hlopt{+} \hlstd{pc3} \hlopt{+} \hlstd{pc4} \hlopt{+}
         \hlstd{pc5} \hlopt{+} \hlstd{pc6} \hlopt{+} \hlstd{pc7} \hlopt{+} \hlstd{pc8} \hlopt{+} \hlstd{pc9} \hlopt{+} \hlstd{pc10} \hlopt{+} \hlstd{snp,} \hlkwc{data} \hlstd{= dat))}
     \hlstd{out} \hlkwb{<-} \hlkwd{as.matrix}\hlstd{(a}\hlopt{$}\hlstd{coefficients[}\hlstr{"snp"}\hlstd{, ])}

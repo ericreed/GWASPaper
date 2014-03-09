@@ -121,10 +121,10 @@ Principal Component Analysis (PCA) is commonly performed, as a means for adjusti
 
 \textbf{If we want to report the number of PCs needed to account for 90\% of the variation I wrote the following code.  It suggests that 1020 PCs are needed of 1184 total.  10 PCs account for less than 1\% of the total variation.}
 <<eval=FALSE>>=
-pervar<-cumsum(evv$values)/sum(evv$values)
-var<-0.9
-pcs<-which(abs(pervar-var)==min(abs(pervar-var)))
-pcs
+#pervar<-cumsum(evv$values)/sum(evv$values)
+#var<-0.9
+#pcs<-which(abs(pervar-var)==min(abs(pervar-var)))
+#pcs
 @
 
 <<eval=FALSE>>=
@@ -158,8 +158,8 @@ The ``a" matrix contains the SNP genotype on the x-axis and the phenotype on the
 <<Function, eval=FALSE>>=
 ldlGWAS<-function(rsNumber){
   print(rsNumber)
-  tempSNP <- data.frame(rpid=row.names(genoNum),snp=genoNum[,rsNumber])
-  dat <- merge(phenoSub,tempSNP,by.x="rpid",by.y="rpid",all.x=TRUE)
+  tempSNP <- data.frame(FamID=row.names(genoNum),snp=genoNum[,rsNumber])
+  dat <- merge(phenoSub,tempSNP,by.x="FamID",by.y="FamID",all.x=TRUE)
   a <- summary(lm(fldl_wk0 ~ age + sex + raceth + pc1 + pc2 + pc3 + pc4 + pc5 + pc6 + pc7 + pc8 + pc9 + pc10 + snp, data=dat))
   out <- as.matrix(a$coefficients['snp',])
   out
