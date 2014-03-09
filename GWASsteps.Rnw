@@ -146,7 +146,6 @@ To run the linear regression on our data, we first need to install the ``paralle
 l
 <<load, eval=FALSE>>=
 library(parallel)
-load("/home/ramoser/correct_phase3.Rdata")
 @
 
 We create a GWAS function that will run our analysis. This function takes a subset of our data ``tempSNP" of ID numbers and RS Numbers. The linear regression model compares our filtered and merged dataset (in this case we are running an analysis on our baseline data) and adjusting for the variables of interest: 
@@ -163,15 +162,10 @@ ldlGWAS<-function(rsNumber){
 }
 @
 
-Next, we create a column of Genotype Numbers and remove SNP's that cause errors in our analysis.
-<<rsVec, eval=FALSE>>=
-rsVec <- as.matrix(colnames(genoNum))
-rsVec <- rsVec[-c(834037,834038,834039,834040,834042, 834043,834046),]
-@
-
-We use ``mcapply()" to run parallel analysis on 8 different cores to save time. Since ``mcapply()" must analyze a list, we first make ``rsVec" into a list. After running the analysis, we put the data back together.
+We use ``mclapply()" to run parallel analysis on 8 different cores to save time. Since ``mclapply()" must analyze a list, we first make ``rsVec" into a list. After running the analysis, we put the data back together.
 
 <<aa, eval=FALSE>>=
+rsVec <- as.matrix(colnames(genoNum))
 rsVec <- as.list(rsVec)
 start <- Sys.time()
 aa <- mclapply(rsVec,ldlGWAS,mc.cores=8)

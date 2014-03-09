@@ -144,30 +144,12 @@ Only phenotypes of patients who have genotype data should be included in the gen
 \begin{knitrout}
 \definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
 \begin{alltt}
-\hlstd{phenoSub} \hlkwb{<-} \hlstd{pheno[pheno}\hlopt{$}\hlstd{rpid} \hlopt{%in%} \hlstd{geno.fam}\hlopt{$}\hlstd{FamID, ]}
+\hlstd{phenoSub} \hlkwb{<-} \hlstd{pheno[pheno}\hlopt{$}\hlstd{rpid} \hlopt{%in%} \hlstd{genoFam}\hlopt{$}\hlstd{FamID, ]}
 \end{alltt}
 \end{kframe}
 \end{knitrout}
 
 
-In order to merge the princple components with the phenotype file, we must first attach participant IDs to the Princple Components.
-\begin{knitrout}
-\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
-\begin{alltt}
-\hlstd{pcs} \hlkwb{<-} \hlkwd{data.frame}\hlstd{(}\hlkwc{rpid} \hlstd{= genoFam}\hlopt{$}\hlstd{FamID, pcs)}
-\end{alltt}
-\end{kframe}
-\end{knitrout}
-
-
-We can now merge the two sets of data.
-\begin{knitrout}
-\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
-\begin{alltt}
-\hlstd{phenoSub} \hlkwb{<-} \hlkwd{merge}\hlstd{(phenoSub, pcs,} \hlkwc{by.x} \hlstd{=} \hlstr{"rpid"}\hlstd{,} \hlkwc{by.y} \hlstd{=} \hlstr{"rpid"}\hlstd{,} \hlkwc{all.x} \hlstd{=} \hlnum{TRUE}\hlstd{)}
-\end{alltt}
-\end{kframe}
-\end{knitrout}
 
 
 \subsection{SNP Level Filtering}
@@ -230,7 +212,7 @@ Make a table one of the columns to make sure the data is formatted correctly.
 \subsection{Principal Components}
 Principal Component Analysis (PCA) is commonly performed, as a means for adjusting for population substructure.  The goal is to account for as most of the genetic variation between the study participants.  This is vital to a GWAS because it allows us to account for varying allele frequencies among populations of various ethnic backgrounds, which could cause confounding, and produce false positive results.
 
-\textbf{If we want to report the number of PCs needed to account for 90\% of the variation I wrote the following code.  It suggests that 1020 PCs are needed.  10 PCs account for less than 1\% of the total variation.}
+\textbf{If we want to report the number of PCs needed to account for 90\% of the variation I wrote the following code.  It suggests that 1020 PCs are needed of 1184 total.  10 PCs account for less than 1\% of the total variation.}
 \begin{knitrout}
 \definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
 \begin{alltt}
@@ -261,12 +243,20 @@ Principal Component Analysis (PCA) is commonly performed, as a means for adjusti
 \hlstd{btr} \hlkwb{<-} \hlkwd{snp.pre.multiply}\hlstd{(geno,} \hlkwd{diag}\hlstd{(}\hlnum{1}\hlopt{/}\hlkwd{sqrt}\hlstd{(evals))} \hlopt{%*%} \hlkwd{t}\hlstd{(pcs))}
 \hlstd{pcs} \hlkwb{<-} \hlkwd{snp.post.multiply}\hlstd{(geno,} \hlkwd{t}\hlstd{(btr))}
 \hlkwd{colnames}\hlstd{(pcs)} \hlkwb{<-} \hlkwd{paste}\hlstd{(}\hlstr{"pc"}\hlstd{,} \hlnum{1}\hlopt{:}\hlstd{num.princ.comp,} \hlkwc{sep} \hlstd{=} \hlstr{""}\hlstd{)}
-\hlkwd{save.image}\hlstd{(}\hlstr{"/project/cricsnp/greg.files/CRIC_GWAS_white.RData"}\hlstd{)}
 \hlkwd{rm}\hlstd{(xxmat)}
 \end{alltt}
 \end{kframe}
 \end{knitrout}
 
+Next, we will merge the principal components with the phenotype file. In order to do so, we must first attach participant IDs to the principal components.
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlstd{pcs} \hlkwb{<-} \hlkwd{data.frame}\hlstd{(}\hlkwc{rpid} \hlstd{= genoFam}\hlopt{$}\hlstd{FamID, pcs)}
+\hlstd{phenoSub} \hlkwb{<-} \hlkwd{merge}\hlstd{(phenoSub, pcs,} \hlkwc{by.x} \hlstd{=} \hlstr{"rpid"}\hlstd{,} \hlkwc{by.y} \hlstd{=} \hlstr{"rpid"}\hlstd{,} \hlkwc{all.x} \hlstd{=} \hlnum{TRUE}\hlstd{)}
+\end{alltt}
+\end{kframe}
+\end{knitrout}
 
 \section{GWAS Analysis}
 
@@ -276,7 +266,6 @@ l
 \definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
 \begin{alltt}
 \hlkwd{library}\hlstd{(parallel)}
-\hlkwd{load}\hlstd{(}\hlstr{"/home/ramoser/correct_phase3.Rdata"}\hlstd{)}
 \end{alltt}
 \end{kframe}
 \end{knitrout}
@@ -302,22 +291,12 @@ The ``a" matrix contains the SNP genotype on the x-axis and the phenotype on the
 \end{knitrout}
 
 
-Next, we create a column of Genotype Numbers and remove SNP's that cause errors in our analysis.
+We use ``mclapply()" to run parallel analysis on 8 different cores to save time. Since ``mclapply()" must analyze a list, we first make ``rsVec" into a list. After running the analysis, we put the data back together.
+
 \begin{knitrout}
 \definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
 \begin{alltt}
 \hlstd{rsVec} \hlkwb{<-} \hlkwd{as.matrix}\hlstd{(}\hlkwd{colnames}\hlstd{(genoNum))}
-\hlstd{rsVec} \hlkwb{<-} \hlstd{rsVec[}\hlopt{-}\hlkwd{c}\hlstd{(}\hlnum{834037}\hlstd{,} \hlnum{834038}\hlstd{,} \hlnum{834039}\hlstd{,} \hlnum{834040}\hlstd{,} \hlnum{834042}\hlstd{,} \hlnum{834043}\hlstd{,} \hlnum{834046}\hlstd{), ]}
-\end{alltt}
-\end{kframe}
-\end{knitrout}
-
-
-We use ``mcapply()" to run parallel analysis on 8 different cores to save time. Since ``mcapply()" must analyze a list, we first make ``rsVec" into a list. After running the analysis, we put the data back together.
-
-\begin{knitrout}
-\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
-\begin{alltt}
 \hlstd{rsVec} \hlkwb{<-} \hlkwd{as.list}\hlstd{(rsVec)}
 \hlstd{start} \hlkwb{<-} \hlkwd{Sys.time}\hlstd{()}
 \hlstd{aa} \hlkwb{<-} \hlkwd{mclapply}\hlstd{(rsVec, ldlGWAS,} \hlkwc{mc.cores} \hlstd{=} \hlnum{8}\hlstd{)}
