@@ -65,18 +65,10 @@ pheno<-read.csv("phenodata.csv")
 
 Only phenotypes of patients who have genotype data should be included in the genotype file.
 <<eval=FALSE>>=
-phenoSub<-pheno[pheno$rpid%in%geno.fam$FamID,]
+phenoSub<-pheno[pheno$rpid%in%genoFam$FamID,]
 @
 
-In order to merge the princple components with the phenotype file, we must first attach participant IDs to the Princple Components.
-<<eval=FALSE>>=
-pcs<-data.frame(rpid=genoFam$FamID,pcs)
-@
 
-We can now merge the two sets of data.
-<<eval=FALSE>>=
-phenoSub<-merge(phenoSub,pcs,by.x="rpid",by.y="rpid",all.x=TRUE)
-@
 
 \subsection{SNP Level Filtering}
 The ``snpStats" package will allow us to perform analysis on the raw ``geno" file.  We will use the ``col.summary()" function, which will produce a matrix with values for a variety of summary analyses at each SNP.
@@ -143,7 +135,11 @@ pcs <- snp.post.multiply(geno, t(btr))
 colnames(pcs) <- paste("pc",1:num.princ.comp,sep="")
 rm(xxmat)
 @
-
+Next, we will merge the principal components with the phenotype file. In order to do so, we must first attach participant IDs to the principal components.
+<<eval=FALSE>>=
+pcs<-data.frame(rpid=genoFam$FamID,pcs)
+phenoSub<-merge(phenoSub,pcs,by.x="rpid",by.y="rpid",all.x=TRUE)
+@
 \section{GWAS Analysis}
 
 To run the linear regression on our data, we first need to install the ``parallel" package to be able to run a parallel analysis, an analysis on multiple cores.
