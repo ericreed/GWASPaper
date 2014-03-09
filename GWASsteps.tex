@@ -144,11 +144,20 @@ Only phenotypes of patients who have genotype data should be included in the gen
 \begin{knitrout}
 \definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
 \begin{alltt}
-\hlstd{phenoSub} \hlkwb{<-} \hlstd{pheno[pheno}\hlopt{$}\hlstd{rpid} \hlopt{%in%} \hlstd{genoFam}\hlopt{$}\hlstd{FamID, ]}
+\hlstd{phenoSub} \hlkwb{<-} \hlstd{pheno[pheno}\hlopt{$}\hlstd{FamID} \hlopt{%in%} \hlstd{genoFam}\hlopt{$}\hlstd{FamID, ]}
 \end{alltt}
 \end{kframe}
 \end{knitrout}
 
+Next, make sure that the variables in the phenotype file are formatted correctly.  Categorical variables, such as race and sex, are often coded as integers, and may need to be reformatted as a factor variable. This is performed using the ``str()" function to check the format of each variable, and then the ``as.factor()" function to format a variable to a factor. Note this can also be done in reverse, if there is a numeric variable stored as categorical data.
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlkwd{str}\hlstd{(phenoSub)}
+\hlstd{phenoSub}\hlopt{$}\hlstd{race} \hlkwb{<-} \hlkwd{as.factor}\hlstd{(phenoSub}\hlopt{$}\hlstd{race)}
+\end{alltt}
+\end{kframe}
+\end{knitrout}
 
 
 
@@ -252,8 +261,8 @@ Next, we will merge the principal components with the phenotype file. In order t
 \begin{knitrout}
 \definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
 \begin{alltt}
-\hlstd{pcs} \hlkwb{<-} \hlkwd{data.frame}\hlstd{(}\hlkwc{rpid} \hlstd{= genoFam}\hlopt{$}\hlstd{FamID, pcs)}
-\hlstd{phenoSub} \hlkwb{<-} \hlkwd{merge}\hlstd{(phenoSub, pcs,} \hlkwc{by.x} \hlstd{=} \hlstr{"rpid"}\hlstd{,} \hlkwc{by.y} \hlstd{=} \hlstr{"rpid"}\hlstd{,} \hlkwc{all.x} \hlstd{=} \hlnum{TRUE}\hlstd{)}
+\hlstd{pcs} \hlkwb{<-} \hlkwd{data.frame}\hlstd{(}\hlkwc{FamID} \hlstd{= genoFam}\hlopt{$}\hlstd{FamID, pcs)}
+\hlstd{phenoSub} \hlkwb{<-} \hlkwd{merge}\hlstd{(phenoSub, pcs,} \hlkwc{by.x} \hlstd{=} \hlstr{"FamID"}\hlstd{,} \hlkwc{by.y} \hlstd{=} \hlstr{"FamID"}\hlstd{,} \hlkwc{all.x} \hlstd{=} \hlnum{TRUE}\hlstd{)}
 \end{alltt}
 \end{kframe}
 \end{knitrout}

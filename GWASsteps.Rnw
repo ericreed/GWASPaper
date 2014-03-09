@@ -65,9 +65,14 @@ pheno<-read.csv("phenodata.csv")
 
 Only phenotypes of patients who have genotype data should be included in the genotype file.
 <<eval=FALSE>>=
-phenoSub<-pheno[pheno$rpid%in%genoFam$FamID,]
+phenoSub<-pheno[pheno$FamID%in%genoFam$FamID,]
 @
+Next, make sure that the variables in the phenotype file are formatted correctly.  Categorical variables, such as race and sex, are often coded as integers, and may need to be reformatted as a factor variable. This is performed using the ``str()" function to check the format of each variable, and then the ``as.factor()" function to format a variable to a factor. Note this can also be done in reverse, if there is a numeric variable stored as categorical data.
+<<eval=FALSE>>=
+str(phenoSub)
+phenoSub$race<-as.factor(phenoSub$race)
 
+@
 
 
 \subsection{SNP Level Filtering}
@@ -137,13 +142,12 @@ rm(xxmat)
 @
 Next, we will merge the principal components with the phenotype file. In order to do so, we must first attach participant IDs to the principal components.
 <<eval=FALSE>>=
-pcs<-data.frame(rpid=genoFam$FamID,pcs)
-phenoSub<-merge(phenoSub,pcs,by.x="rpid",by.y="rpid",all.x=TRUE)
+pcs<-data.frame(FamID=genoFam$FamID,pcs)
+phenoSub<-merge(phenoSub,pcs,by.x="FamID",by.y="FamID",all.x=TRUE)
 @
 \section{GWAS Analysis}
 
 To run the linear regression on our data, we first need to install the ``parallel" package to be able to run a parallel analysis, an analysis on multiple cores.
-l
 <<load, eval=FALSE>>=
 library(parallel)
 @

@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.1415926-2.4-1.40.13 (MiKTeX 2.9) (preloaded format=pdflatex 2013.10.17)  9 MAR 2014 14:00
+This is pdfTeX, Version 3.1415926-2.4-1.40.13 (MiKTeX 2.9) (preloaded format=pdflatex 2013.10.17)  9 MAR 2014 16:45
 entering extended mode
 **GWASsteps.tex
 (C:\Users\Eric\Desktop\RA\GWASPaper\GWASsteps.tex
@@ -313,77 +313,79 @@ Overfull \hbox (1.14696pt too wide) in paragraph at lines 125--125
 
 Package color Info: Redefining color shadecolor on input line 135.
 Package color Info: Redefining color shadecolor on input line 145.
+Package color Info: Redefining color shadecolor on input line 154.
 [2]
-Package color Info: Redefining color shadecolor on input line 169.
+Package color Info: Redefining color shadecolor on input line 178.
 
-Overfull \hbox (64.38252pt too wide) in paragraph at lines 175--175
+Overfull \hbox (64.38252pt too wide) in paragraph at lines 184--184
 [][]\OT1/cmtt/m/n/10.95 use[] []<-[] []([][]![][]is.na[][](snpsum.col[][]$[][]M
 AF)[] []&[] []snpsum.col[][]$[][]MAF[] []>[] []minor)[] []&[] []([][]![][]is.na
 [][](snpsum.col[][]$[][]z.HWE)[] []&[][] 
  []
 
 
-Overfull \hbox (301.97977pt too wide) in paragraph at lines 176--176
+Overfull \hbox (301.97977pt too wide) in paragraph at lines 185--185
 []    []\OT1/cmtt/m/n/10.95 snpsum.col[][]$[][]z.HWE[][]^[][]2[] []<[] []qnorm[
 ][](hardy[][]/[][]2[][])[][]^[][]2[][])[] []&[] []snpsum.col[][]$[][]Call.rate[
 ] []>=[] []call[]  []\OT1/cmtt/m/it/10.95 #This creates a Boolean Vector of TR
 UE and FALSE[][] 
  []
 
-Package color Info: Redefining color shadecolor on input line 188.
+Package color Info: Redefining color shadecolor on input line 197.
 [3]
-LaTeX Font Info:    Try loading font information for OMS+cmr on input line 198.
+LaTeX Font Info:    Try loading font information for OMS+cmr on input line 207.
 
  ("C:\Program Files (x86)\MiKTeX 2.9\tex\latex\base\omscmr.fd"
 File: omscmr.fd 1999/05/25 v2.5h Standard LaTeX font definitions
 )
 LaTeX Font Info:    Font shape `OMS/cmr/m/n' in size <10.95> not available
-(Font)              Font shape `OMS/cmsy/m/n' tried instead on input line 198.
-Package color Info: Redefining color shadecolor on input line 205.
-Package color Info: Redefining color shadecolor on input line 217.
-Package color Info: Redefining color shadecolor on input line 229.
-Package color Info: Redefining color shadecolor on input line 237.
-Package color Info: Redefining color shadecolor on input line 253.
+(Font)              Font shape `OMS/cmsy/m/n' tried instead on input line 207.
+Package color Info: Redefining color shadecolor on input line 214.
+Package color Info: Redefining color shadecolor on input line 226.
+Package color Info: Redefining color shadecolor on input line 238.
+Package color Info: Redefining color shadecolor on input line 246.
  [4]
-Overfull \hbox (6.89565pt too wide) in paragraph at lines 256--256
+Package color Info: Redefining color shadecolor on input line 262.
+
+Overfull \hbox (18.39302pt too wide) in paragraph at lines 265--265
 [][]\OT1/cmtt/m/n/10.95 phenoSub[] []<-[] []merge[][](phenoSub, pcs,[] []by.x[]
- []=[] []"rpid"[][],[] []by.y[] []=[] []"rpid"[][],[] []all.x[] []=[] []TRUE[][
-])[][] 
+ []=[] []"FamID"[][],[] []by.y[] []=[] []"FamID"[][],[] []all.x[] []=[] []TRUE[
+][])[][] 
  []
 
-Package color Info: Redefining color shadecolor on input line 266.
-Package color Info: Redefining color shadecolor on input line 278.
-LaTeX Font Info:    Try loading font information for OMS+cmtt on input line 280
+Package color Info: Redefining color shadecolor on input line 275.
+Package color Info: Redefining color shadecolor on input line 287.
+LaTeX Font Info:    Try loading font information for OMS+cmtt on input line 289
 .
 (C:/PROGRA~1/R/R-30~1.2/share/texmf/tex/latex\omscmtt.fd
 File: omscmtt.fd 
 )
 LaTeX Font Info:    Font shape `OMS/cmtt/m/n' in size <10.95> not available
-(Font)              Font shape `OMS/cmsy/m/n' tried instead on input line 280.
+(Font)              Font shape `OMS/cmsy/m/n' tried instead on input line 289.
 
-Overfull \hbox (24.14171pt too wide) in paragraph at lines 282--282
+Overfull \hbox (24.14171pt too wide) in paragraph at lines 291--291
 []    []\OT1/cmtt/m/n/10.95 tempSNP[] []<-[] []data.frame[][]([][]rpid[] []=[] 
 []row.names[][](genoNum),[] []snp[] []= genoNum[, rsNumber])[][] 
  []
 
 
-Overfull \hbox (24.14171pt too wide) in paragraph at lines 283--283
+Overfull \hbox (24.14171pt too wide) in paragraph at lines 292--292
 []    []\OT1/cmtt/m/n/10.95 dat[] []<-[] []merge[][](phenoSub, tempSNP,[] []by.
 x[] []=[] []"rpid"[][],[] []by.y[] []=[] []"rpid"[][],[] []all.x[] []=[] []TRUE
 [][])[][] 
  []
 
 
-Overfull \hbox (1.14696pt too wide) in paragraph at lines 284--284
+Overfull \hbox (1.14696pt too wide) in paragraph at lines 293--293
 []    []\OT1/cmtt/m/n/10.95 a[] []<-[] []summary[][]([][]lm[][](fldl_wk0[] []~[
 ] []age[] []+[] []sex[] []+[] []raceth[] []+[] []pc1[] []+[] []pc2[] []+[] []pc
 3[] []+[] []pc4[] []+[][] 
  []
 
-Package color Info: Redefining color shadecolor on input line 297.
 [5]
-Package color Info: Redefining color shadecolor on input line 314.
-Package color Info: Redefining color shadecolor on input line 338.
+Package color Info: Redefining color shadecolor on input line 306.
+Package color Info: Redefining color shadecolor on input line 323.
+Package color Info: Redefining color shadecolor on input line 347.
  [6] (C:\Users\Eric\Desktop\RA\GWASPaper\GWASsteps.aux) ) 
 Here is how much of TeX's memory you used:
  2924 strings out of 493921
@@ -401,7 +403,7 @@ TeX 2.9/fonts/type1/public/amsfonts/cm/cmmi10.pfb><C:/Program Files (x86)/MiKTe
 X 2.9/fonts/type1/public/amsfonts/cm/cmr10.pfb><C:/Program Files (x86)/MiKTeX 2
 .9/fonts/type1/public/amsfonts/cm/cmsy10.pfb><C:/Program Files (x86)/MiKTeX 2.9
 /fonts/type1/public/amsfonts/cm/cmtt10.pfb>
-Output written on GWASsteps.pdf (6 pages, 121076 bytes).
+Output written on GWASsteps.pdf (6 pages, 121453 bytes).
 PDF statistics:
  49 PDF objects out of 1000 (max. 8388607)
  0 named destinations out of 1000 (max. 500000)
