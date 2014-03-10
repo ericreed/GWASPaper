@@ -140,23 +140,53 @@ pcs <- snp.post.multiply(geno, t(btr))
 colnames(pcs) <- paste("pc",1:num.princ.comp,sep="")
 rm(xxmat)
 @
+
 Next, we will merge the principal components with the phenotype file. In order to do so, we must first attach participant IDs to the principal components.
+
 <<eval=FALSE>>=
 pcs<-data.frame(FamID=genoFam$FamID,pcs)
 phenoSub<-merge(phenoSub,pcs,by.x="FamID",by.y="FamID",all.x=TRUE)
 @
-\section{GWAS Analysis}
 
-To run the linear regression on our data, we first need to install the ``parallel" package to be able to run a parallel analysis, an analysis on multiple cores.
-<<load, eval=FALSE>>=
-library(parallel)
-@
+
+\section{Genome-Wide Association Study (GWAS) Analysis}
+
+~~Question: do i need the Paragraph about GWAS since this should be in the intro???\\
+
+Could you explain these models to me: additive and dominant\\
+
+Multiple methods are used to analyse GWAS data: Linkage analysis, Admixture mapping and Assosciation anaylysis. In our case, we are doing association analysis since we have a high number of SNPs and these subjects are assumed not to be correlated.Furthermore, we will be applying logistic regression since it easily incorporates Genetic models (additive, dominant or recessive).\\
+
+Genetic models commonly used are Additive Models, Dominant Models and Recessive models. These are used to evaluate the interaction between alleles on homolougous chromosomes. \\
+
+\textsc{Additive}\\
+Additive models are used to evaluate additive structure and reveal associations that depend additively based on the allele classification. These models assume that if having a single recessive allele will increase the trait by some $x$, where $x \in \mathbb{R}, then having two recessive alleles in the homologs will increase the trait by $2x$. This model can be written as:
+
+\textsc{Dominant}\\
+Dominant models assume that the homologs conatain at least one dominant allele for the trait to exist. This model can be written as:
+\begin{eqnarray}
+y_{i} = \beta_0 + \beta
+\end{eqnarray}
+
+\textsc{Recessive}\\
+Recessive models assume both homologs contain the recessive allele for the trait to exist. This model can be written as:
+
+\subsection{Model}
+
+To run the GWAS analysis our ??? model of association includes age, gender, race and the first ten principle components.
+
+\begin{eqnarray}
+Y_i &=& \beta_0 + \beta_1 X_1 + \cdots + \beta_{13} X_{13} \\
+\text{fldl_wk0}_i &=& \beta_0 \text{age}_i + \beta_1 \text{sex}_i + \beta_2 \text{race}_i + \beta_3 \text{PC}_{1,i} + \beta_4 \text{PC}_{2,i} + \cdots + \beta_{13} \text{PC}_{10,i} 
+\end{eqnarray}
+
+\subsection{Fitting the Model}
 
 We create a GWAS function that will run our analysis. This function takes a subset of our data ``tempSNP" of ID numbers and RS Numbers. The linear regression model compares our filtered and merged dataset (in this case we are running an analysis on our baseline data) and adjusting for the variables of interest: 
-The ``a" matrix contains the SNP genotype on the x-axis and the phenotype on the y-axis. This function then maps the regression model for the filtered, merged dataset (in this case we are running an analysis on our baseline data) and adjusting for the variables of interest: Age, Sex, Race, the ten PCs and SNPs. The ``out" matrix pulls just the row that contains the estimate for the SNP from the linear model summary. 
+The ``a" object computes and returns a list of summary statistics of the fitted linear model, ``a" contains the SNP genotype on the x-axis and the phenotype on the y-axis. This function then maps the regression model for the filtered, merged dataset (in this case we are running an analysis on our baseline data) and adjusting for the variables of interest: Age, Sex, Race, the ten PCs and SNPs. The ``out" matrix pulls just the row that contains the estimate for the SNP from the linear model summary. 
 
 <<Function, eval=FALSE>>=
-ldlGWAS<-function(rsNumber){
+GWAS<-function(rsNumber){
   print(rsNumber)
   tempSNP <- data.frame(FamID=row.names(genoNum),snp=genoNum[,rsNumber])
   dat <- merge(phenoSub,tempSNP,by.x="FamID",by.y="FamID",all.x=TRUE)
@@ -166,19 +196,27 @@ ldlGWAS<-function(rsNumber){
 }
 @
 
+\subsubsection{Running a Parallel Analysis}
+
+To run the linear regression on our data, we first need to install the ``parallel" package to be able to run a parallel analysis, an analysis on multiple cores.
+
+<<load, eval=FALSE>>=
+library(parallel)
+@
+
 We use ``mclapply()" to run parallel analysis on 8 different cores to save time. Since ``mclapply()" must analyze a list, we first make ``rsVec" into a list. After running the analysis, we put the data back together.
 
 <<aa, eval=FALSE>>=
 rsVec <- as.matrix(colnames(genoNum))
 rsVec <- as.list(rsVec)
-start <- Sys.time()
-aa <- mclapply(rsVec,ldlGWAS,mc.cores=8)
+aa <- mclapply(rsVec,GWAS,mc.cores=8)
 out <- do.call(cbind,aa)
 fldl_wk0_p3 <- data.frame(t(out))
 @
 
+\subsection{Summarizing and Visualization}
 
-After analysis, We have a new dataset that we write to a file that contains rsNumber, Estimate, Standard Error, Zvalues and Pvalues
+We now have a new dataset that we write to a file that contains rsNumber, Estimate, Standard Error, Zvalues and Pvalues
 
 <<data, eval=FALSE>>=
 names(fldl_wk0_p3) <- c("Estimate","SE","Zvalue","Pvalue")
@@ -186,6 +224,14 @@ fldl_wk0_p3$rsNumber <- rsVec
 fldl_wk0_p3 <- as.matrix(fldl_wk0_p3)
 write.csv(fldl_wk0_p3,"/home/ramoser/fldl_wk0_p3")
 @
+
+~~~manhattan plots and mapping to genes, sorting by p-val
+
+
+
+\newpage
+
+~~~~~~~~~~~~~~~~~THIS IS NOT EDITED YET~~~~~~~~~~~~~~~~~~~~~
 
 We can now sort the results by p-value to find our strongest associations.
 
@@ -201,7 +247,6 @@ From this GWAS we can see a high level of association between baseline LDL and s
 *I'm not sure how to finish.  I think we should go on to discuss the shear number of analysis we are running and how the Bonferroni correction returns p-value threshold of:
 <<bonferoni>>=
 0.05/834279
-
 @
 If we were to only go by this number we'd only associate high significance to rs7412.  This is where we could point to other analysis such as MixMAP.
                                               
