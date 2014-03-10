@@ -36,6 +36,7 @@ source("http://bioconductor.org/biocLite.R")
 biocLite("snpStats")
 library(snpStats)
 @
+%set working directory?
 \subsection{Data Files}
 \subsection*{The .fam File}
 The .fam file is a matrix that identifies each study participant. It contains 6 columns which identify each individual by ``Family ID Number", ``Sample ID Number",``Paternal ID Number", ``Maternal ID Number", ``Sex", and ``Phenotype".  There are $n$ rows, one for each individual. Note that not all of these columns may contain information depending on the nature of the data collected and the strategies for analysis. In the example to follow, a separate phenotype file will be read in, containing quantified phenotype data.
@@ -99,6 +100,7 @@ genoBim <- genoBim[use,] #This will filter the .bim file
 geno <- geno[,use] #This will filter our genotype file.
 @
 
+%Variant alleles =1 or =0
 \subsubsection*{Formatting the Genotype File}
 Once we have filtered our data using the formatting necessary for the ``snpStats" package we will need to convert our genotype file into a matrix in numeric format.
 <<eval=FALSE>>=
@@ -107,9 +109,9 @@ genoNum<-as(geno,"numeric")
 Our final genotype (``genoNum") matrix contains the genotype for each individual at each individual SNP, stored as either the number of Major or Minor alleles, depending on how the data was originally formatted.  For example, if the data was formatted to count the number of major alleles, the meaning of the genotype data is coded as follows:
 
 \begin{itemize}
-  \item 0 $=$ Homozygous Recessive
+  \item 0 $=$ Homozygous Minor
   \item 1 $=$ Heterozygous
-  \item 2 $=$ Homozygous Dominant
+  \item 2 $=$ Homozygous Major
 \end{itemize}
 
 Make a table one of the columns to make sure the data is formatted correctly.
