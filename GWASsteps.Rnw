@@ -123,8 +123,8 @@ Principal Component Analysis (PCA) is commonly performed, as a means for adjusti
 <<eval=FALSE>>=
 #pervar<-cumsum(evv$values)/sum(evv$values)
 #var<-0.9
-#pcs<-which(abs(pervar-var)==min(abs(pervar-var)))
-#pcs
+#pcs1<-which(abs(pervar-var)==min(abs(pervar-var)))
+#pcs1
 @
 
 <<eval=FALSE>>=
