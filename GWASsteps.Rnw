@@ -198,7 +198,8 @@ GWAS<-function(rsNumber){
   out
 }
 @
-
+%When I ran the glm vs. the lm, they seemed to run at the same speed. I get the same results.
+%
 \subsubsection{Running a Parallel Analysis}
 
 To run the linear regression on our data, we first need to install the ``parallel" package to be able to run a parallel analysis, an analysis on multiple cores.
