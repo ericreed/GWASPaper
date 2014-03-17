@@ -1,3 +1,4 @@
+
 \documentclass[11pt]{article}\usepackage[]{graphicx}\usepackage[]{color}
 %% maxwidth is the original width if it is less than linewidth
 %% otherwise use linewidth (to make sure the graphics do not exceed the margin)
@@ -91,6 +92,7 @@ To analyize the Plink files ($.bim$, $.fam$, $.bed$) in R, the "snpStats" packag
 \end{kframe}
 \end{knitrout}
 
+%set working directory?
 \subsection{Data Files}
 \subsection*{The .fam File}
 The .fam file is a matrix that identifies each study participant. It contains 6 columns which identify each individual by ``Family ID Number", ``Sample ID Number",``Paternal ID Number", ``Maternal ID Number", ``Sex", and ``Phenotype".  There are $n$ rows, one for each individual. Note that not all of these columns may contain information depending on the nature of the data collected and the strategies for analysis. In the example to follow, a separate phenotype file will be read in, containing quantified phenotype data.
@@ -163,15 +165,15 @@ Next, make sure that the variables in the phenotype file are formatted correctly
 
 \subsection{SNP Level Filtering}
 The ``snpStats" package will allow us to perform analysis on the raw ``geno" file.  We will use the ``col.summary()" function, which will produce a matrix with values for a variety of summary analyses at each SNP.
-This we will allow us to filter our data based on a certain set criteria.  For this study we have chosen to filter our data as follows: 
+This we will allow us to filter our data based on a certain set of criteria.  For this study, we have chosen to filter our data as follows: 
 \subsubsection*{Call Rate}
-The call rate is the most straight forward of the three criteria, as it means to only keep that have genotype data above a certain threshold. In the following example we chose a call rate of 90 \%.  This is essentially stating that we only want to keep the SNPs for which there is data for more than or equal 90\% of the study particpants, or for which there is missing data for less than or equal to 10\% of the study participants.
+The call rate is the most straight forward of the three criteria, as it means to keep, only study participants that have genotype data above a certain threshold. In the following example we chose a call rate of 90 \%.  This is essentially stating that we only want to keep the SNPs for which there is data for more than or equal to 90\% of the study particpants, or for which there is missing data for less than or equal to 10\% of the study participants.
 \subsubsection*{Minor Allele Frequency}
-If every study participant is homozygous at a given SNP, than there is nothing to infer about the relationship between genotype and phenotype, as each participant has the same genotype at this SNP.  This is a common occurence with the major allele, as it is often much more common in a given population.  Therefore, we it is important to keep only the SNPs for which we have a certain proportion of minor alleles present in the study sample.  In the example to follow we will use a Minor Allele Frequency, that will remove SNPs for which the minor allele frequency is less than 1 \%.
+If every study participant is homozygous at a given SNP, then there is nothing to infer about the relationship between genotype and phenotype, as each participant has the same genotype at this SNP.  This is a common occurence with the major allele, as it is often much more common in a given population.  Therefore, it is important to keep only the SNPs for which we have a certain proportion of minor alleles present in the study sample.  In the example to follow we will use a Minor Allele Frequency, which will remove SNPs for which the minor allele frequency is less than 1 \%.
 \subsubsection*{Hardy-Weinberg Equilibrium}
-The Hardy-Weingberg Equilibrium is based off the principal that if two alleles are possible for a given genotype, then the sum of the probabilities of recieving each allele is 1.
+The Hardy-Weingberg Equilibrium is based off the principle that if two alleles are possible for a given genotype, then the sum of the probabilities of recieving each allele is 1.
 \centerline{$p+q=1$}
-Given the frequency of a certain allele we can, therfore, not only predict the frequency of the other allele, but also the proportion of homozygous recessive, heterozygous, and homozygous dominant individuals in a population. If violated can assume that there was a possible genotyping error, and we must remove the data for this SNP. We can't expect our samples to exhibit this principle perfectly, however we can calculate the p-value that this principle is being followed, and set a threshold to keep only data with Hardy-Weinberg equlibrium p-values below a certain p-value. In the example to follow we have chosen a p-value of 0.001.
+Given the frequency of a certain allele we can, therfore, not only predict the frequency of the other allele, but also the proportion of homozygous recessive, heterozygous, and homozygous dominant individuals in a population. If violated, we can assume that there was a possible genotyping error, and we must remove the data for this SNP. We can't expect our samples to exhibit this principle perfectly, however we can calculate the p-value that this principle is being followed, and set a threshold to keep only data with Hardy-Weinberg equlibrium p-values below a certain cutoff. In the example to follow we have chosen a cutoff of 0.001.
 
 
 \begin{knitrout}
@@ -191,6 +193,7 @@ Given the frequency of a certain allele we can, therfore, not only predict the f
 \end{knitrout}
 
 
+%Variant alleles =1 or =0
 \subsubsection*{Formatting the Genotype File}
 Once we have filtered our data using the formatting necessary for the ``snpStats" package we will need to convert our genotype file into a matrix in numeric format.
 \begin{knitrout}
@@ -204,9 +207,9 @@ Once we have filtered our data using the formatting necessary for the ``snpStats
 Our final genotype (``genoNum") matrix contains the genotype for each individual at each individual SNP, stored as either the number of Major or Minor alleles, depending on how the data was originally formatted.  For example, if the data was formatted to count the number of major alleles, the meaning of the genotype data is coded as follows:
 
 \begin{itemize}
-  \item 0 $=$ Homozygous Recessive
+  \item 0 $=$ Homozygous Minor
   \item 1 $=$ Heterozygous
-  \item 2 $=$ Homozygous Dominant
+  \item 2 $=$ Homozygous Major
 \end{itemize}
 
 Make a table one of the columns to make sure the data is formatted correctly.
@@ -226,7 +229,7 @@ Principal Component Analysis (PCA) is commonly performed, as a means for adjusti
 \definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
 \begin{alltt}
 \hlcom{# pervar<-cumsum(evv$values)/sum(evv$values) var<-0.9}
-\hlcom{# pcs<-which(abs(pervar-var)==min(abs(pervar-var))) pcs}
+\hlcom{# pcs1<-which(abs(pervar-var)==min(abs(pervar-var))) pcs1}
 \end{alltt}
 \end{kframe}
 \end{knitrout}
@@ -280,7 +283,9 @@ Multiple methods are used to analyse GWAS data: Linkage analysis, Admixture mapp
 Genetic models commonly used are Additive Models, Dominant Models and Recessive models. These are used to evaluate the interaction between alleles on homolougous chromosomes. \\
 
 \textsc{Additive}\\
-Additive models are used to evaluate additive structure and reveal associations that depend additively based on the allele classification. These models assume that if having a single recessive allele will increase the trait by some $x$, where $x \in \mathbb{R}$, then having two recessive alleles in the homologs will increase the trait by $2x$. This model can be written as:
+Additive models are used to evaluate additive structure and reveal associations that depend additively based on the allele classification. These models assume that if having a single recessive allele will increase the trait by some $x$, 
+%where $x \in \mathbb{R}$, 
+then having two recessive alleles in the homologs will increase the trait by $2x$. This model can be written as:
 
 \textsc{Dominant}\\
 Dominant models assume that the homologs conatain at least one dominant allele for the trait to exist. This model can be written as:
@@ -297,12 +302,11 @@ To run the GWAS analysis our ??? model of association includes age, gender, race
 
 \begin{eqnarray}
 Y_i &=& \beta_0 + \beta_1 X_1 + \cdots + \beta_{13} X_{13} \\
-
 \end{eqnarray}
 
 \subsection{Fitting the Model}
 
-We create a GWAS function that will run our analysis. This function takes a subset of our data ``tempSNP" of ID numbers and RS Numbers. The linear regression model compares our filtered and merged dataset (in this case we are running an analysis on our baseline data) and adjusting for the variables of interest: 
+We create a GWAS function that will run our analysis. This function takes a subset of our data ``tempSNP" of ID numbers and RS Numbers. The linear regression model compares our filtered and merged dataset (in this case we are running an analysis on our baseline data) and adjusts for the variables of interest: 
 The ``a" object computes and returns a list of summary statistics of the fitted linear model, ``a" contains the SNP genotype on the x-axis and the phenotype on the y-axis. This function then maps the regression model for the filtered, merged dataset (in this case we are running an analysis on our baseline data) and adjusting for the variables of interest: Age, Sex, Race, the ten PCs and SNPs. The ``out" matrix pulls just the row that contains the estimate for the SNP from the linear model summary. 
 
 \begin{knitrout}
@@ -321,7 +325,8 @@ The ``a" object computes and returns a list of summary statistics of the fitted 
 \end{kframe}
 \end{knitrout}
 
-
+%When I ran the glm vs. the lm, they seemed to run at the same speed. I get the same results.
+%
 \subsubsection{Running a Parallel Analysis}
 
 To run the linear regression on our data, we first need to install the ``parallel" package to be able to run a parallel analysis, an analysis on multiple cores.
