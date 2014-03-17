@@ -6,6 +6,6 @@
 \contentsline {section}{\numberline {3}Genome-Wide Association Study (GWAS) Analysis}{8}
 \contentsline {subsection}{\numberline {3.1}Model}{9}
 \contentsline {subsection}{\numberline {3.2}Fitting the Model}{10}
-\contentsline {subsubsection}{\numberline {3.2.1}Running a Parallel Analysis}{10}
+\contentsline {subsubsection}{\numberline {3.2.1}Running a Parallel Analysis}{11}
 \contentsline {subsection}{\numberline {3.3}Summarizing and Visualization}{11}
 \contentsline {paragraph}{This Is an Example of a D Head}{13}
