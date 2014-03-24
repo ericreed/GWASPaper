@@ -1,0 +1,415 @@
+\documentclass{ar2e}
+\begin{document}
+
+\input epsf.tex    %<-If you need EPS figures to be
+                   %  called in {figure} environment for PC
+\input epsf.def   %<-If you need EPS figures to be
+                   %  called in {figure} environment for Macintosh
+
+\input psfig.sty
+
+\jname{..}
+\jyear{}
+\jvol{}
+\ARinfo{}
+
+\title{Performing a Genome Wide Association Study in R}
+
+\markboth{Performing a GWAS in R}{Foulkes et al}
+
+\author{Andrea Foulkes, Gregory Matthews, Sara Nunez, Emily Ramos, Eric Reed
+\affiliation{University of Massachusetts Amherst}}
+
+\begin{keywords}
+......
+\end{keywords}
+
+\begin{abstract}
+.....
+.....
+\end{abstract}
+
+\maketitle
+
+This document provides the steps necessary to run a Genome Wide Association Study (GWAS) analysis.
+\section{Introduction}
+\section{Data Files and Pre-Processing}
+
+To analyize the Plink files ($.bim$, $.fam$, $.bed$) in R, the "snpStats" package is required.
+
+\begin{verbatim}
+     source("http://bioconductor.org/biocLite.R")
+     biocLite("snpStats")
+     library(snpStats)
+\end{verbatim}
+%set working directory?
+\subsection{Data Files}
+\subsection*{The .fam File}
+The .fam file is a matrix that identifies each study participant. It contains 6 columns which identify each individual by ``Family ID Number", ``Sample ID Number",``Paternal ID Number", ``Maternal ID Number", ``Sex", and ``Phenotype".  There are $n$ rows, one for each individual. Note that not all of these columns may contain information depending on the nature of the data collected and the strategies for analysis. In the example to follow, a separate phenotype file will be read in, containing quantified phenotype data.
+\begin{verbatim}
+     genoFam<-read.table("genodata.fam");colnames(genoFam) = c("FamID","IndID","PatID","MatID","sex","phenotype")
+\end{verbatim}
+\subsection*{The .bim File}
+The .bim file is a matrix that provides information about each SNP in our study.  There are 6 colums that contain information for the ``Chromosome Number", ``rsNumber", ``Genetic Distance", ``Position ID", ``Allele 1", ``Allele 2".  There are $n$ rows, one for each SNP in the analysis.  By default, the rsNumbers are read in as factor variables, and will be changed to character variables.
+\begin{verbatim}
+     genoBim <- read.table("genodata.bim");
+       colnames(genoBim) = c("chr","SNP","GenDist","BPPos","g1","g2")
+     genoBim$SNP <- as.character(genoBim$SNP)
+\end{verbatim}
+\subsection*{The .bed File}
+The .bed file is a matrix that contains the genotypic data in binary format. It's the result of the conversion of .ped and .map files by the PLINK software. This is the largest of the three files because it contains every SNP in the study, as well as the genotype at this snp for each individual. In order to interpret the binary data, we need to employ the ``read.plink()" function, from the ``snpStats" package, to read in the .fam, .bim, and .bed functions together, and to interpret the binary data in the .bed file and put it into the proper format. The  ``snpStats" package is an update of the ``snpMatrix" package, and creates a ``snpMatrix" object.  We will pull out the ``genotype" slot of this object, which contains the genotype data, stored as a matrix of $p$ columns, one for each SNP by ``rsNumber", and $n$ rows, one for each study participant by ``Family ID Number", containing the genotype of each study participant at each individual SNP, as either ``01", ``02", or ``03".
+
+\begin{samepage}
+\begin{verbatim}
+     geno<-read.plink("genodata.bed","genodata.bim","genodata.fam")$genotype
+\end{verbatim}
+\end{samepage}
+
+\subsection*{The Phenotype File}
+The phenotype file contains a matrix, with the phenotype variables as columns and the participant IDs as the unit of observation.
+
+\begin{samepage}
+\begin{verbatim}
+     pheno<-read.csv("phenodata.csv")
+\end{verbatim}
+\end{samepage}
+
+Only phenotypes of patients who have genotype data should be included in the genotype file.
+
+\begin{samepage}
+\begin{verbatim}
+     phenoSub<-pheno[pheno$FamID%in%genoFam$FamID,]
+\end{verbatim}
+\end{samepage}
+
+Next, make sure that the variables in the phenotype file are formatted correctly.  Categorical variables, such as race and sex, are often coded as integers, and may need to be reformatted as a factor variable. This is performed using the ``str()" function to check the format of each variable, and then the ``as.factor()" function to format a variable to a factor. Note this can also be done in reverse, if there is a numeric variable stored as categorical data.
+
+\begin{samepage}
+\begin{verbatim}
+     str(phenoSub)
+     phenoSub$race<-as.factor(phenoSub$race)
+\end{verbatim}
+\end{samepage}
+
+
+
+\subsection{SNP Level Filtering}
+The ``snpStats" package will allow us to perform analysis on the raw ``geno" file.  We will use the ``col.summary()" function, which will produce a matrix with values for a variety of summary analyses at each SNP.
+This we will allow us to filter our data based on a certain set of criteria.  For this study, we have chosen to filter our data as follows: \\
+\textsc{Call Rate}\\
+The call rate is the most straight forward of the three criteria, as it means to keep, only study participants that have genotype data above a certain threshold. In the following example we chose a call rate of 90 \%.  This is essentially stating that we only want to keep the SNPs for which there is data for more than or equal to 90\% of the study particpants, or for which there is missing data for less than or equal to 10\% of the study participants.\\
+\textsc{Minor Allele Frequency}\\
+If every study participant is homozygous at a given SNP, then there is nothing to infer about the relationship between genotype and phenotype, as each participant has the same genotype at this SNP.  This is a common occurence with the major allele, as it is often much more common in a given population.  Therefore, it is important to keep only the SNPs for which we have a certain proportion of minor alleles present in the study sample.  In the example to follow, we will use a Minor Allele Frequency, which will remove SNPs for which the minor allele frequency is less than 1 \%.\\
+\textsc{Hardy-Weinberg Equilibrium}\\
+The Hardy-Weingberg Equilibrium is based off the principle that if two alleles are possible for a given genotype, then the sum of the probabilities of having a given allele at either homologous chromosome is 1.
+
+\centerline{$p+q=1$}
+
+Where $p$ and $q$ represent the probabilities of having either allele at either homologous chromosome.
+Therefore, given the frequency of a certain allele, we should not only be able predict the frequency of the other allele, but also the proportion of homozygous major, heterozygous, and homozygous dominant individuals in a given population. Hardy-Weinberg Equilibrium can be violated via population admixture and stratification. In such cases we would still consider the associations between genotype and phentoype to be informative. However, violations may also occur as a result of genotyping errors, which may greatly decrease the validity of the results.  Therefore, it is common prectice to remove the data for SNPS that violate Hardy-Weinberg Equilibrium. We cannot expect our samples to exhibit this principle perfectly, however we can calculate the p-value that this principle is being followed, and set a threshold to keep only data with Hardy-Weinberg equlibrium p-values below a certain cutoff. In the example to follow we have chosen a cutoff of 0.001.
+
+
+\begin{samepage}
+\begin{verbatim}
+     call<-0.9
+     minor<-0.01
+     hardy<-0.001
+     snpsum.col <- col.summary(geno)
+       use <-  (!is.na(snpsum.col$MAF)&
+	snpsum.col$MAF > minor) & 
+        (!is.na(snpsum.col$z.HWE)&snpsum.col$z.HWE^2 < 
+          qnorm(hardy/2)^2) & 
+     snpsum.col$Call.rate >= call #This creates a Boolean
+          Vector of "TRUE" and "FALSE"
+     use[is.na(use)] <- FALSE 
+     genoBim <- genoBim[use,] #This will filter the .bim file.
+     geno <- geno[,use] #This will filter our genotype file.
+\end{verbatim}
+\end{samepage}
+
+
+%Variant alleles =1 or =0
+\textsc{Formatting the Genotype File}\\
+Once we have filtered our data using the formatting necessary for the ``snpStats" package we will need to convert our genotype file into a matrix in numeric format.
+\begin{verbatim}
+     genoNum<-as(geno,"numeric")
+\end{verbatim}
+Our final genotype (``genoNum") matrix contains the genotype for each individual at each individual SNP, stored as either the number of Major or Minor alleles, depending on how the data was originally formatted.  For example, if the data was formatted to count the number of major alleles, the meaning of the genotype data is coded as follows:
+
+\begin{samepage}
+\begin{itemize}
+  \item 0 $=$ Homozygous Minor
+  \item 1 $=$ Heterozygous
+  \item 2 $=$ Homozygous Major
+\end{itemize}
+\end{samepage}
+
+Make a table one of the columns to make sure the data is formatted correctly.
+\begin{verbatim}
+     table(genoNum[,1])
+\end{verbatim}
+\subsection{Principal Components}
+Principal Component Analysis (PCA) is commonly performed, as a means for adjusting for population substructure.  The goal is to account for as most of the genetic variation between the study participants.  This is vital to a GWAS because it allows us to account for varying allele frequencies among populations of various ethnic backgrounds, which could cause confounding, and produce false positive results.
+
+\textbf{If we want to report the number of PCs needed to account for 90\% of the variation I wrote the following code.  It suggests that 1020 PCs are needed of 1184 total.  10 PCs account for less than 1\% of the total variation.}
+\begin{verbatim}
+     #pervar<-cumsum(evv$values)/sum(evv$values)
+     #var<-0.9
+     #pcs1<-which(abs(pervar-var)==min(abs(pervar-var)))
+     #pcs1
+\end{verbatim}
+
+\begin{samepage}
+\begin{verbatim}
+     num.princ.comp<-10
+     xxmat <- xxt(geno, correct.for.missing = FALSE)
+     evv <- eigen(xxmat, symmetric = TRUE)
+     pcs <- evv$vectors[,1:num.princ.comp]
+     evals <- evv$values[1:num.princ.comp]
+     btr <- snp.pre.multiply(geno, diag(1/sqrt(evals)) %*% t(pcs))
+     pcs <- snp.post.multiply(geno, t(btr))
+     colnames(pcs) <- paste("pc",1:num.princ.comp,sep="")
+     rm(xxmat)
+\end{verbatim}
+\end{samepage}
+Next, we will merge the principal components with the phenotype file. In order to do so, we must first attach participant IDs to the principal components.
+
+\begin{samepage}
+\begin{verbatim}
+     pcs<-data.frame(FamID=genoFam$FamID,pcs)
+     phenoSub<-merge(phenoSub,pcs,by.x="FamID",by.y="FamID",all.x=TRUE)
+\end{verbatim}
+\end{samepage}
+
+\section{Genome-Wide Association Study (GWAS) Analysis}
+
+~~Question: do i need the Paragraph about GWAS since this should be in the intro???\\
+
+Could you explain these models to me: additive and dominant\\
+
+Multiple methods are used to analyse GWAS data: Linkage analysis, Admixture mapping and Assosciation anaylysis. In our case, we are doing association analysis since we have a high number of SNPs and these subjects are assumed not to be correlated.Furthermore, we will be applying logistic regression since it easily incorporates Genetic models (additive, dominant or recessive).\\
+
+Genetic models commonly used are Additive Models, Dominant Models and Recessive models. These are used to evaluate the interaction between alleles on homolougous chromosomes. \\
+
+\textsc{Additive}\\
+Additive models are used to evaluate additive structure and reveal associations that depend additively based on the allele classification. These models assume that if having a single recessive allele will increase the trait by some $x$, then having two recessive alleles in the homologs will increase the trait by $2x$. This model can be written as:
+
+\textsc{Dominant}\\
+Dominant models assume that the homologs conatain at least one dominant allele for the trait to exist. This model can be written as:
+\begin{eqnarray}
+y_{i} = \beta_0 + \beta
+\end{eqnarray}
+
+\textsc{Recessive}\\
+Recessive models assume both homologs contain the recessive allele for the trait to exist. This model can be written as:
+
+\subsection{Model}
+
+To run the GWAS analysis our ??? model of association includes age, gender, race and the first ten principle components.
+
+\begin{eqnarray}
+Y_i &=& \beta_0 + \beta_1 X_1 + \cdots + \beta_{13} X_{13}
+\end{eqnarray}
+
+\subsection{Fitting the Model}
+
+We create a GWAS function that will run our analysis. This function takes a subset of our data ``tempSNP" of ID numbers and RS Numbers. The linear regression model compares our filtered and merged dataset (in this case we are running an analysis on our baseline data) and adjusts for the variables of interest: 
+The ``a" object computes and returns a list of summary statistics of the fitted linear model, ``a" contains the SNP genotype on the x-axis and the phenotype on the y-axis. This function then maps the regression model for the filtered, merged dataset (in this case we are running an analysis on our baseline data) and adjusting for the variables of interest: Age, Sex, Race, the ten PCs and SNPs. The ``out" matrix pulls just the row that contains the estimate for the SNP from the linear model summary.
+
+\begin{samepage}
+\begin{verbatim}
+    GWAS<-function(rsNumber){
+      print(rsNumber)
+      tempSNP <- data.frame(FamID=row.names(genoNum),
+        snp=genoNum[,rsNumber])
+      dat <- merge(phenoSub,tempSNP,by.x="FamID",by.y="FamID",
+        all.x=TRUE)
+      a <- summary(lm(fldl_wk0 ~ age + sex + raceth + pc1 + pc2 + pc3 
+        + pc4 + pc5 + pc6 + pc7 + pc8 + pc9 + pc10 + snp, data=dat))
+      out <- as.matrix(a$coefficients['snp',])
+        out}
+\end{verbatim}
+\end{samepage}
+%When I ran the glm vs. the lm, they seemed to run at the same speed. I get the same results.
+%
+\subsubsection{Running a Parallel Analysis}
+
+To run the linear regression on our data, we first need to install the ``parallel" package to be able to run a parallel analysis, an analysis on multiple cores.
+
+\begin{verbatim}
+    library(parallel)
+\end{verbatim}
+
+We use ``mclapply()" to run parallel analysis on 8 different cores to save time. Since ``mclapply()" must analyze a list, we first make ``rsVec" into a list. After running the analysis, we put the data back together.
+
+\begin{samepage}
+\begin{verbatim}
+    rsVec <- as.matrix(colnames(genoNum))
+    rsVec <- as.list(rsVec)
+    aa <- mclapply(rsVec,GWAS,mc.cores=8)
+    out <- do.call(cbind,aa)
+    fldl_wk0_p3 <- data.frame(t(out))
+\end{verbatim}
+\end{samepage}
+
+\subsection{Summarizing and Visualization}
+
+We now have a new dataset that we write to a file that contains rsNumber, Estimate, Standard Error, Zvalues and Pvalues
+
+\begin{samepage}
+\begin{verbatim}
+    names(fldl_wk0_p3) <- c("Estimate","SE","Zvalue","Pvalue")
+    fldl_wk0_p3$rsNumber <- rsVec
+    fldl_wk0_p3 <- as.matrix(fldl_wk0_p3)
+    write.csv(fldl_wk0_p3,"/home/ramoser/fldl_wk0_p3")
+\end{verbatim}
+\end{samepage}
+~~~manhattan plots and mapping to genes, sorting by p-val
+
+
+
+\newpage
+
+~~~~~~~~~~~~~~~~~THIS IS NOT EDITED YET~~~~~~~~~~~~~~~~~~~~~
+
+We can now sort the results by p-value to find our strongest associations.
+
+\begin{verbatim}
+    %fldlwk0<-read.csv("/Users/Eric/Desktop/RA/fldlwk0GWAS")
+    %wk0bypval<-fldlwk0[order(fldlwk0$Pvalue),]
+    %wk0bypval<-wk0bypval[,-c(1,3,12)] #This is to remove numbered columns added by saving as a ".csv" file
+    %wk0bypval[1:10,]
+\end{verbatim}
+
+From this GWAS we can see a high level of association between baseline LDL and snp rsNumber, rs7412, on the APOE gene, with a p-value of 2.69e-12.
+
+*I'm not sure how to finish.  I think we should go on to discuss the shear number of analysis we are running and how the Bonferroni correction returns p-value threshold of:
+\begin{verbatim}
+    0.05/834279
+\end{verbatim}
+If we were to only go by this number we'd only associate high significance to rs7412.  This is where we could point to other analysis such as MixMAP.
+
+\newpage
+                                           
+\begin{extract}
+.....
+.....
+.....
+\end{extract}
+
+
+
+\begin{figure}%1
+\figurebox{10pc}{10pc}
+\caption{}
+\label{fig1}
+\end{figure}
+
+\begin{figure}%2		Example using {picture} command
+\setlength{\unitlength}{1mm}
+\centerline{%
+\begin{picture}(50,30)
+\put(20,0){\circle{20}}
+\put(20,0){\vector(0,1){10}}
+\put(20,0){\circle*{5}}
+\end{picture}}
+\caption{Example of LaTeX {\tt picture} environment.}
+\label{fig2}
+\end{figure}
+
+\begin{figure}%3	% Figure using psfig.sty
+\centerline{\psfig{figure=fig1.ps,height=5pc}}
+\caption{Example of LaTeX {\tt psfig} environment.}
+\label{fig3}
+\end{figure}
+
+\begin{figure}%4	% Example of Figure pull
+\epsfscale1200		% Figure enlarged to 120%
+\centerline{\epsfbox{fig1.eps}}
+\caption{Example of LaTeX {\tt epsf} environment.}
+\label{fig4}
+\end{figure}
+
+
+
+\begin{table}%1
+\def~{\hphantom{0}}
+\caption{....}
+\label{tab1}
+\begin{tabular}{@{}llcc@{}}
+\toprule
+
+\colrule
+...\\
+...\\
+\botrule
+\end{tabular}
+\end{table}
+......
+......
+.....
+
+Unnumbered equation
+\[
+        A+B= a^4+4a^3b+6a^2b^2 +4ab^3+b^4
+\]
+
+Example of numbered equation (\ref{eq1}):-
+\begin{equation}
+......
+\label{eq1}
+\end{equation}
+
+Example of unnumbered group of equations:-
+\begin{eqnarray*}
+....\\
+....\\
+\end{eqnarray*}
+Example of numbered group of equations (\ref{eq4}):-
+\begin{eqnarray}
+.....................
+\label{eq4}
+\end{eqnarray}
+
+
+\paragraph{This Is an Example of a D Head}
+
+%%% Numbered Literature Cited
+
+%% Caution: Not all Annual Reviews series use this format for
+%% bibliography entries.Your Production Editor will advise you
+%% on correct format for your particular series.
+
+\begin{thebibliography}{99}
+\bibitem{Bishop68}%1
+Bishop WH, Richards FM. 1968. Isoelectric point of a protein in 
+the crosslinked crystalline state. {\it J. Mol. Biol.} 33:415--21
+
+\bibitem{....}
+...... 
+
+\bibitem{....}
+...... 
+\end{thebibliography}
+
+%%Unnumbered Literature Cited
+
+\begin{thebibliography}{}
+\bibitem[Barinaga 1989]{Barinaga89} 
+Barinaga M. 1989. The missing crystallography data. {\it Science} 
+245:1179--81
+
+\bibitem[... year]{...}
+......
+......
+
+\bibitem[... year]{...}
+......
+......
+
+\bibitem[... year]{...}
+......
+......
+
+\end{thebibliography}
+\end{document}
