@@ -151,19 +151,16 @@ phenoSub<-merge(phenoSub,pcs,by.x="FamID",by.y="FamID",all.x=TRUE)
 
 \section{Genome-Wide Association Study (GWAS) Analysis}
 
-~~Question: do i need the Paragraph about GWAS since this should be in the intro???\\
-
-Could you explain these models to me: additive and dominant\\
-
-Multiple methods are used to analyse GWAS data: Linkage analysis, Admixture mapping and Assosciation anaylysis. In our case, we are doing association analysis since we have a high number of SNPs and these subjects are assumed not to be correlated.Furthermore, we will be applying logistic regression since it easily incorporates Genetic models (additive, dominant or recessive).\\
+Multiple methods are used to analyse GWAS data: Linkage analysis, Admixture mapping and Assosciation anaylysis. In our case, we are doing Association analysis since we have a high number of SNPs and these subjects are assumed not to be correlated. Furthermore, we will be applying logistic regression since it easily incorporates Genetic models (additive, dominant or recessive).\\
 
 Genetic models commonly used are Additive Models, Dominant Models and Recessive models. These are used to evaluate the interaction between alleles on homolougous chromosomes. \\
 
 \textsc{Additive}\\
-Additive models are used to evaluate additive structure and reveal associations that depend additively based on the allele classification. These models assume that if having a single recessive allele will increase the trait by some $x$, where $x \in \mathbb{R}$, then having two recessive alleles in the homologs will increase the trait by $2x$. This model can be written as:
+Additive models are used to evaluate additive structure and reveal associations that depend additively based on the allele classification. These models assume that if having a single recessive allele will increase the trait by some $\beta$, then having two recessive alleles in the homologs will increase the trait, on the average, by $2\beta$. This model can be written as:
 
 \textsc{Dominant}\\
 Dominant models assume that the homologs conatain at least one dominant allele for the trait to exist. This model can be written as:
+
 \begin{eqnarray}
 y_{i} = \beta_0 + \beta
 \end{eqnarray}
@@ -173,11 +170,11 @@ Recessive models assume both homologs contain the recessive allele for the trait
 
 \subsection{Model}
 
-To run the GWAS analysis our ??? model of association includes age, gender, race and the first ten principle components.
+To run the GWAS analysis our additive model of association includes age, gender, race and the first ten principle components.
 
 \begin{eqnarray}
 Y_i &=& \beta_0 + \beta_1 X_1 + \cdots + \beta_{13} X_{13} \\
-
+\text{fldl_wk0}_i &=& \beta_0 \text{age}_i + \beta_1 \text{sex}_i + \beta_2 \text{race}_i + \beta_3 \text{PC}_{1,i} + \beta_4 \text{PC}_{2,i} + \cdots + \beta_{13} \text{PC}_{10,i} 
 \end{eqnarray}
 
 \subsection{Fitting the Model}
