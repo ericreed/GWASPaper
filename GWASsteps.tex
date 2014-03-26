@@ -325,7 +325,7 @@ The ``a" object computes and returns a list of summary statistics of the fitted 
     \hlkwd{print}\hlstd{(rsNumber)}
     \hlstd{tempSNP} \hlkwb{<-} \hlkwd{data.frame}\hlstd{(}\hlkwc{FamID} \hlstd{=} \hlkwd{row.names}\hlstd{(genoNum),} \hlkwc{snp} \hlstd{= genoNum[, rsNumber])}
     \hlstd{dat} \hlkwb{<-} \hlkwd{merge}\hlstd{(phenoSub, tempSNP,} \hlkwc{by.x} \hlstd{=} \hlstr{"FamID"}\hlstd{,} \hlkwc{by.y} \hlstd{=} \hlstr{"FamID"}\hlstd{,} \hlkwc{all.x} \hlstd{=} \hlnum{TRUE}\hlstd{)}
-    \hlstd{a} \hlkwb{<-} \hlkwd{summary}\hlstd{(}\hlkwd{glm}\hlstd{(fldl.wk0} \hlopt{~} \hlstd{age} \hlopt{+} \hlstd{sex} \hlopt{+} \hlstd{raceth} \hlopt{+} \hlstd{pc1} \hlopt{+} \hlstd{pc2} \hlopt{+} \hlstd{pc3} \hlopt{+} \hlstd{pc4} \hlopt{+}
+    \hlstd{a} \hlkwb{<-} \hlkwd{summary}\hlstd{(}\hlkwd{glm}\hlstd{(fldl_wk0} \hlopt{~} \hlstd{age} \hlopt{+} \hlstd{sex} \hlopt{+} \hlstd{raceth} \hlopt{+} \hlstd{pc1} \hlopt{+} \hlstd{pc2} \hlopt{+} \hlstd{pc3} \hlopt{+} \hlstd{pc4} \hlopt{+}
         \hlstd{pc5} \hlopt{+} \hlstd{pc6} \hlopt{+} \hlstd{pc7} \hlopt{+} \hlstd{pc8} \hlopt{+} \hlstd{pc9} \hlopt{+} \hlstd{pc10} \hlopt{+} \hlstd{snp,} \hlkwc{family} \hlstd{= gaussian,} \hlkwc{data} \hlstd{= dat))}
     \hlstd{out} \hlkwb{<-} \hlkwd{as.matrix}\hlstd{(a}\hlopt{$}\hlstd{coefficients[}\hlstr{"snp"}\hlstd{, ])}
     \hlstd{out}
@@ -368,32 +368,88 @@ We use ``mclapply()" to run parallel analysis on 8 different cores to save time.
 
 \subsection{Summarizing and Visualization}
 
-We now have a new dataset that we write to a file that contains rsNumber, Estimate, Standard Error, Zvalues and Pvalues
+**Put in Merge stuff
+
+
+We now have a new dataset that contains rsNumbers, Estimates, Standard Errors, Zvalues and Pvalues.
 
 \begin{knitrout}
 \definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
 \begin{alltt}
-\hlkwd{names}\hlstd{(fldl.wk0.p3)} \hlkwb{<-} \hlkwd{c}\hlstd{(}\hlstr{"Estimate"}\hlstd{,} \hlstr{"SE"}\hlstd{,} \hlstr{"Zvalue"}\hlstd{,} \hlstr{"Pvalue"}\hlstd{)}
-\hlstd{fldl.wk0.p3}\hlopt{$}\hlstd{rsNumber} \hlkwb{<-} \hlstd{rsVec}
-\hlstd{fldl.wk0.p3} \hlkwb{<-} \hlkwd{as.matrix}\hlstd{(fldl.wk0.p3)}
-\hlkwd{write.csv}\hlstd{(fldl_wk0_p3,} \hlstr{"/home/ramoser/fldl.wk0.p3"}\hlstd{)}
+\hlkwd{names}\hlstd{(fldl_wk0_p3)} \hlkwb{<-} \hlkwd{c}\hlstd{(}\hlstr{"Estimate"}\hlstd{,} \hlstr{"SE"}\hlstd{,} \hlstr{"Zvalue"}\hlstd{,} \hlstr{"Pvalue"}\hlstd{)}
+\hlstd{fldl_wk0_p3}\hlopt{$}\hlstd{rsNumber} \hlkwb{<-} \hlstd{rsVec}
+\hlstd{fldl_wk0_p3} \hlkwb{<-} \hlkwd{as.matrix}\hlstd{(fldl_wk0_p3)}
+\hlkwd{write.csv}\hlstd{(fldl_wk0_p3,} \hlstr{"/home/ramoser/fldl-wk0_p3"}\hlstd{)}
 \end{alltt}
 \end{kframe}
 \end{knitrout}
 
 
-Below is a function that will create a Manhattan Plot. A Manhattan plot vizualizes where chromosome numbers are displayed along the $x$-axis an  the negative logarithm of the association P-value for each SNP on the Y-axis. This is useful when trying to determine if the association between the SNP and the chromosome is significant.\\
-
-* is chromosome the right word? Or homolog or haplotype?
-\\
-
-*Before doing manhattan plot, should we put in the merging files information: New RS numbers, Keeping Gene Types:exonic, intronic, splicing, UTR3, UTR5, downstream, exonic;splicing, upstream, and extracting only P-vals $< 5*10^-5$. I'm asking because it is only after this merging that we create a table that will allow for the manhattan plot. Or am I mistaken, are we merly showing the plot as an example.
-
+Our new dataset contains only part of the variables needed to accurately summarize the data. We need to be able to determine which SNP cooresponds to which chromosome, gene and type. To do so we load in a dataset that contains this information for the RS numbers and merge with our existing dataset.   
 
 \begin{knitrout}
 \definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
 \begin{alltt}
-\hlstd{one} \hlkwb{=} \hlkwd{read.table}\hlstd{(}\hlstr{"baseline_table.RData"}\hlstd{,} \hlkwc{header} \hlstd{= T,} \hlkwc{sep} \hlstd{=} \hlstr{"\textbackslash{}t"}\hlstd{)}
+\hlstd{baseline1} \hlkwb{<-} \hlkwd{read.csv}\hlstd{(}\hlstr{"fldl_wk0_p3.txt"}\hlstd{,} \hlkwc{header} \hlstd{= T)}
+\hlstd{baseline1} \hlkwb{<-} \hlstd{baseline1[,} \hlopt{-}\hlnum{1}\hlstd{]}
+
+\hlstd{merge1} \hlkwb{<-} \hlkwd{read.table}\hlstd{(}\hlstr{"2013-08-12-AnnotationSNPsToGenes.txt"}\hlstd{,} \hlkwc{sep} \hlstd{=} \hlstr{"\textbackslash{}t"}\hlstd{)}
+\hlstd{merge1}\hlopt{$}\hlstd{rsNumber} \hlkwb{<-} \hlstd{merge1}\hlopt{$}\hlstd{snp}
+\hlstd{merge1} \hlkwb{<-} \hlstd{merge1[,} \hlkwd{c}\hlstd{(}\hlnum{1}\hlopt{:}\hlnum{5}\hlstd{,} \hlnum{7}\hlstd{)]}
+
+\hlstd{baseline2} \hlkwb{<-} \hlkwd{merge}\hlstd{(baseline1, merge1,} \hlkwc{by} \hlstd{=} \hlstr{"rsNumber"}\hlstd{)}
+\end{alltt}
+\end{kframe}
+\end{knitrout}
+
+
+In this case, we are only interested in looking at the following gene types: exonic, intronic, splicing, UTR3, UTR5, downstream, exonic;splicing, and upstream. Thus, we keep only these types and sort by P-values. \\
+
+*Why only these? Is this standard, should I describe each of these gene types? I feel like there is a bit more ``meat" needed here.
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlcom{# Keeping Gene Types:exonic, intronic, splicing, UTR3, UTR5, downstream,}
+\hlcom{# exonic;splicing, upstream}
+
+\hlstd{keep1} \hlkwb{<-} \hlkwd{c}\hlstd{(}\hlstr{"exonic"}\hlstd{,} \hlstr{"intronic"}\hlstd{,} \hlstr{"splicing"}\hlstd{,} \hlstr{"UTR3"}\hlstd{,} \hlstr{"UTR5"}\hlstd{,} \hlstr{"downstream"}\hlstd{,} \hlstr{"exonic;splicing"}\hlstd{,}
+    \hlstr{"upstream"}\hlstd{)}
+\hlstd{baseline3} \hlkwb{<-} \hlstd{baseline2[}\hlkwd{is.element}\hlstd{(}\hlkwc{el} \hlstd{= baseline2}\hlopt{$}\hlstd{type,} \hlkwc{set} \hlstd{= keep1), ]}
+\hlstd{baseline3} \hlkwb{<-} \hlstd{baseline3[}\hlkwd{order}\hlstd{(baseline3}\hlopt{$}\hlstd{Pvalue), ]}
+\end{alltt}
+\end{kframe}
+\end{knitrout}
+
+
+In this example we are interested in P-values $< 5*10^{-5}$. Thus, we create a subset of SNPs with those P-values and summarize them in a table. Furthermore, we drop ``chr" to report just chromosome numbers and save the resulting table.
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlstd{baseTable} \hlkwb{<-} \hlstd{baseline3[baseline3}\hlopt{$}\hlstd{Pvalue} \hlopt{<=} \hlnum{5} \hlopt{*} \hlnum{10}\hlopt{^}\hlstd{(}\hlopt{-}\hlnum{5}\hlstd{), ]}
+
+\hlstd{baseline3}\hlopt{$}\hlstd{chr} \hlkwb{<-} \hlkwd{substring}\hlstd{(baseline3}\hlopt{$}\hlstd{chr,} \hlnum{4}\hlstd{,} \hlnum{5}\hlstd{)}
+\hlstd{baseline3}\hlopt{$}\hlstd{chr} \hlkwb{<-} \hlkwd{as.numeric}\hlstd{(}\hlkwd{as.character}\hlstd{(baseline3}\hlopt{$}\hlstd{chr))}
+
+\hlkwd{write.csv}\hlstd{(baseline3,} \hlstr{"baseline.txt"}\hlstd{)}
+
+\hlkwd{xtable}\hlstd{(baseTable)}
+\end{alltt}
+\end{kframe}
+\end{knitrout}
+
+
+
+Now that we have a complete dataset with SNPs, chromosome, gene type, etc., we can create a Manhattan Plot to view the data. Below is a function that will create a Manhattan Plot. A Manhattan plot vizualizes where chromosome numbers are displayed along the $x$-axis an  the negative logarithm of the association P-value for each SNP on the Y-axis. This is useful when trying to determine if the association between the SNP and the chromosome is significant.\\
+
+* is chromosome the right word? Or homolog or haplotype?
+*Greg, I can't get this code to actually work. Am I missing something?
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlstd{one} \hlkwb{=} \hlkwd{read.csv}\hlstd{(}\hlstr{"baseline.txt"}\hlstd{,} \hlkwc{header} \hlstd{= T)}
 \hlstd{position} \hlkwb{=} \hlstd{one}\hlopt{$}\hlstd{Pos}\hlopt{/}\hlnum{1e+06}
 \hlstd{chr} \hlkwb{=} \hlstd{one}\hlopt{$}\hlstd{Chr}
 \hlstd{nsnp} \hlkwb{=} \hlkwd{as.numeric}\hlstd{(}\hlkwd{table}\hlstd{(chr))[}\hlnum{1}\hlopt{:}\hlnum{22}\hlstd{]}
@@ -427,7 +483,7 @@ Below is a function that will create a Manhattan Plot. A Manhattan plot vizualiz
 \end{knitrout}
 
 
-Now, we can creat the Manhattan Plot
+Now, we can creat the Manhattan Plot.
 
 \begin{knitrout}
 \definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}

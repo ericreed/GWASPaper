@@ -203,7 +203,7 @@ GWAS<-function(rsNumber){
   print(rsNumber)
   tempSNP <- data.frame(FamID=row.names(genoNum),snp=genoNum[,rsNumber])
   dat <- merge(phenoSub,tempSNP,by.x="FamID",by.y="FamID",all.x=TRUE)
-  a <- summary(glm(fldl.wk0 ~ age + sex + raceth + pc1 + pc2 + pc3 + pc4 + pc5 + pc6 + pc7 + pc8 + pc9 + pc10 + snp, family = gaussian, data=dat))
+  a <- summary(glm(fldl_wk0 ~ age + sex + raceth + pc1 + pc2 + pc3 + pc4 + pc5 + pc6 + pc7 + pc8 + pc9 + pc10 + snp, family = gaussian, data=dat))
   out <- as.matrix(a$coefficients['snp',])
   out
 }
@@ -232,25 +232,65 @@ fldl.wk0.p3 <- data.frame(t(out))
 
 \subsection{Summarizing and Visualization}
 
-We now have a new dataset that we write to a file that contains rsNumber, Estimate, Standard Error, Zvalues and Pvalues
+**Put in Merge stuff
+
+
+We now have a new dataset that contains rsNumbers, Estimates, Standard Errors, Zvalues and Pvalues.
 
 <<data, eval=FALSE>>=
-names(fldl.wk0.p3) <- c("Estimate","SE","Zvalue","Pvalue")
-fldl.wk0.p3$rsNumber <- rsVec
-fldl.wk0.p3 <- as.matrix(fldl.wk0.p3)
-write.csv(fldl_wk0_p3,"/home/ramoser/fldl.wk0.p3")
+names(fldl_wk0_p3) <- c("Estimate","SE","Zvalue","Pvalue")
+fldl_wk0_p3$rsNumber <- rsVec
+fldl_wk0_p3 <- as.matrix(fldl_wk0_p3)
+write.csv(fldl_wk0_p3,"/home/ramoser/fldl-wk0_p3")
 @
 
-Below is a function that will create a Manhattan Plot. A Manhattan plot vizualizes where chromosome numbers are displayed along the $x$-axis an  the negative logarithm of the association P-value for each SNP on the Y-axis. This is useful when trying to determine if the association between the SNP and the chromosome is significant.\\
+Our new dataset contains only part of the variables needed to accurately summarize the data. We need to be able to determine which SNP cooresponds to which chromosome, gene and type. To do so we load in a dataset that contains this information for the RS numbers and merge with our existing dataset.   
+
+<<merging, eval= FALSE>>=
+baseline1 <- read.csv("fldl_wk0_p3.txt", header = T)
+baseline1 <- baseline1[, -1]
+
+merge1 <- read.table("2013-08-12-AnnotationSNPsToGenes.txt", sep="\t")
+merge1$rsNumber <- merge1$snp
+merge1 <- merge1[, c(1:5,7)]
+
+baseline2 <- merge(baseline1, merge1, by = "rsNumber")
+
+@
+
+In this case, we are only interested in looking at the following gene types: exonic, intronic, splicing, UTR3, UTR5, downstream, exonic;splicing, and upstream. Thus, we keep only these types and sort by P-values. \\
+
+*Why only these? Is this standard, should I describe each of these gene types? I feel like there is a bit more ``meat" needed here.
+
+<<Types to keep, eval=FALSE>>=
+#Keeping Gene Types:exonic, intronic, splicing, UTR3, UTR5, downstream, exonic;splicing, upstream
+
+keep1 <- c("exonic", "intronic", "splicing", "UTR3", "UTR5", "downstream", "exonic;splicing", "upstream")
+baseline3 <- baseline2[is.element(el=baseline2$type, set=keep1), ]
+baseline3 <- baseline3[order(baseline3$Pvalue),]
+@
+
+In this example we are interested in P-values $< 5*10^{-5}$. Thus, we create a subset of SNPs with those P-values and summarize them in a table. Furthermore, we drop ``chr" to report just chromosome numbers and save the resulting table.
+
+<<pvals, eval=FALSE>>=
+baseTable <- baseline3[baseline3$Pvalue <= 5*10^(-5), ]
+
+baseline3$chr<-substring(baseline3$chr, 4,5) 
+baseline3$chr<-as.numeric(as.character(baseline3$chr))                                            
+
+write.csv(baseline3,"baseline.txt")
+
+xtable(baseTable)
+@
+
+
+Now that we have a complete dataset with SNPs, chromosome, gene type, etc., we can create a Manhattan Plot to view the data. Below is a function that will create a Manhattan Plot. A Manhattan plot vizualizes where chromosome numbers are displayed along the $x$-axis an  the negative logarithm of the association P-value for each SNP on the Y-axis. This is useful when trying to determine if the association between the SNP and the chromosome is significant.\\
 
 * is chromosome the right word? Or homolog or haplotype?
-\\
-
-*Before doing manhattan plot, should we put in the merging files information: New RS numbers, Keeping Gene Types:exonic, intronic, splicing, UTR3, UTR5, downstream, exonic;splicing, upstream, and extracting only P-vals $< 5*10^-5$. I'm asking because it is only after this merging that we create a table that will allow for the manhattan plot. Or am I mistaken, are we merly showing the plot as an example.
-
+*Greg, I can't get this code to actually work. Am I missing something?
 
 <<Manhattan Plot function, eval=FALSE>>=
-one=read.table("baseline_table.RData",header=T,sep="\t")
+one=read.csv("baseline.txt", header=T)
 position=one$Pos/1000000
 chr=one$Chr
 nsnp=as.numeric(table(chr))[1:22]
@@ -276,7 +316,7 @@ for(CHR in 2:22){
 }
 @
 
-Now, we can creat the Manhattan Plot
+Now, we can creat the Manhattan Plot.
 
 <<plotting the manhattan, , eval=FALSE>>=
 bitmap(file="manhattan.jpeg",type="jpeg",width=10,height=6,res=432,pointsize=8)
