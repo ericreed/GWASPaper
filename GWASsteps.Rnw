@@ -17,6 +17,7 @@
 \usepackage{geometry}
 \pagestyle{fancy}
 \usepackage{graphicx}
+\usepackage{undertilde}
 
 
 
@@ -92,8 +93,8 @@ Therefore, given the frequency of a certain allele, we should not only be able p
 $$p^2 +2pq+q^2=1$$
 Here, the proportion of the homozygous major genotype is predicted as $p^2$, the hetrozygous genotype is predictedas $2pq$, and the proportion of the homozygous recessive genotype  is predictted as $q^2$. Since we can't expect the observed values to precisely match the exected values in our samples, a $\chi^2$-test statistic is used to measure the departure between the expected number of a given genotype and the observed number of a given genotype to obtain a p-value.  If the p-value is above a certain cut-off, we assume that the allele frequencies comply with Hardy-Weinberg Equilibrium. 
 
-Though Hardy-Weinberg Equilibrium can be violated via population admixture and stratification, to such cases we would still consider the associations between genotype and phentoype to be informative, they may also occur as a result of genotyping errors.  Therefore, it is common prectice to remove the data for SNPS that violate Hardy-Weinberg Equilibrium. In the following example we have chosen a cutoff p-value of 0.001.
-It is also important to adjust for multiple comparisons. A conservative number of comparisons to use would be the number of SNPs in our analysis, however we will use a somewhat liberal value of 1000.
+Though Hardy-Weinberg Equilibrium can be violated via population admixture and stratification, and in such cases we would still consider the associations between genotype and phentoype to be informative, they may also occur as a result of genotyping errors.  Therefore, it is common prectice to remove the data for SNPS that violate Hardy-Weinberg Equilibrium. In the following example we have chosen a cutoff p-value of 0.001.
+It is also important to adjust for multiple comparisons. A conservative number of comparisons would be the number of SNPs in our analysis, however we will use a somewhat liberal value of 1000.
 
 <<eval=FALSE>>=
 call<-0.9
@@ -160,35 +161,42 @@ phenoSub<-merge(phenoSub,pcs,by.x="FamID",by.y="FamID",all.x=TRUE)
 
 \section{Genome-Wide Association Study (GWAS) Analysis}
 
-~~Question: do i need the Paragraph about GWAS since this should be in the intro???\\
-
-Could you explain these models to me: additive and dominant\\
-
-Multiple methods are used to analyse GWAS data: Linkage analysis, Admixture mapping and Assosciation anaylysis. In our case, we are doing association analysis since we have a high number of SNPs and these subjects are assumed not to be correlated.Furthermore, we will be applying logistic regression since it easily incorporates Genetic models (additive, dominant or recessive).\\
-
-Genetic models commonly used are Additive Models, Dominant Models and Recessive models. These are used to evaluate the interaction between alleles on homolougous chromosomes. \\
+Multiple methods are used to analyse GWAS data: Linkage analysis, Admixture mapping and Assosciation anaylysis. since we have a high number of SNPs and these subjects are assumed not to be correlated, we will be conducting an Association analysis . Furthermore, we will be applying logistic regression since it easily incorporates Genetic models (additive, dominant or recessive). Genetic models commonly used are Additive Models, Dominant Models and Recessive models. These are used to evaluate the interaction between alleles on homolougous chromosomes. \\
 
 \textsc{Additive}\\
-Additive models are used to evaluate additive structure and reveal associations that depend additively based on the allele classification. These models assume that if having a single recessive allele will increase the trait by some $x$, 
-%where $x \in \mathbb{R}$, 
-then having two recessive alleles in the homologs will increase the trait by $2x$. This model can be written as:
+Additive models are used to evaluate additive structure and reveal associations that depend additively based on the allele classification. These models assume that if having a single minor allele will increase the quantitative trait we are interested in, $y$, by $\beta$, then having two minor alleles in the homologs will increase $y$ by $2\beta$. \\
+To represent this model, let $A$ and $a$ represent the possible alleles at a given SNP locus where $A$ is the major allele and $a$ is the minor allele. Let $I(x_{i,k} = a)$ be an indicator for whether the allele on the $k$th homolog ($k = 1,2$) is the minor allele for individual $i$, then this model can be written as 
+
+\begin{eqnarray}
+y_i &=& \alpha + \beta [I(x_{i,1} = a) + I(x_{i,2} = a)] + \epsilon_i
+\end{eqnarray}
 
 \textsc{Dominant}\\
-Dominant models assume that the homologs conatain at least one dominant allele for the trait to exist. This model can be written as:
+Dominant models assume that the homologs conatain at least one major allele for $y$ to exist. Having one or more copies of $a$ will increase $y$ by $\beta$. This model can be written as:
+
 \begin{eqnarray}
-y_{i} = \beta_0 + \beta
+y_i &=& \alpha + \beta I(x_{i,1} = a \; \text{or} \; x_{i,2} = a) + \epsilon_i
 \end{eqnarray}
 
 \textsc{Recessive}\\
-Recessive models assume both homologs contain the recessive allele for the trait to exist. This model can be written as:
+Recessive models assume both homologs contain the minor allele for $y$ to exist. This model can be written as:
+
+\begin{eqnarray}
+y_i &=& \alpha + \beta [I(x_{i,1} = a) * I(x_{i,2} = a)] + \epsilon_i
+\end{eqnarray}
+
+*What is the format of citations? Should we do a .bib file? I need to cite Andrea's book.
+
 
 \subsection{Model}
 
-To run the GWAS analysis our ??? model of association includes age, gender, race and the first ten principle components.
+To run the GWAS analysis the additive model of association should include demographic, clinical, environmental and other relevant covariates such as Age, Sex and Race. This model can be written as
+\begin{eqnarray*}
+\utilde{Y} &=& \bf{X} \bf{\beta} + \bf{P} \alpha + \gamma _j \text{SNP} _j + \utilde{\epsilon}
+\end{eqnarray*}
+where $\gamma _j \text{SNP} _j$ is the SNP effect, $X$ is a vector of the relevant covariates and $P$ is a vector of principle comonents, the demension of which depends on the number of principle components chosen to be used in the analysis.\\
 
-\begin{eqnarray}
-Y_i &=& \beta_0 + \beta_1 X_1 + \cdots + \beta_{13} X_{13} \\
-\end{eqnarray}
+*Question: $\beta$ is bf too, right? What about $\alpha$?
 
 \subsection{Fitting the Model}
 
@@ -200,13 +208,15 @@ GWAS<-function(rsNumber){
   print(rsNumber)
   tempSNP <- data.frame(FamID=row.names(genoNum),snp=genoNum[,rsNumber])
   dat <- merge(phenoSub,tempSNP,by.x="FamID",by.y="FamID",all.x=TRUE)
-  a <- summary(lm(fldl_wk0 ~ age + sex + raceth + pc1 + pc2 + pc3 + pc4 + pc5 + pc6 + pc7 + pc8 + pc9 + pc10 + snp, data=dat))
+  a <- summary(glm(fldl_wk0 ~ age + sex + raceth + pc1 + pc2 + pc3 + pc4 + pc5 + pc6 + pc7 + pc8 + pc9 + pc10 + snp, family = gaussian, data=dat))
   out <- as.matrix(a$coefficients['snp',])
   out
 }
 @
 %When I ran the glm vs. the lm, they seemed to run at the same speed. I get the same results.
-%
+%I, Emily, ran as well and there was no difference. So I put in glm just to make it general. 
+
+
 \subsubsection{Running a Parallel Analysis}
 
 To run the linear regression on our data, we first need to install the ``parallel" package to be able to run a parallel analysis, an analysis on multiple cores.
@@ -222,22 +232,112 @@ rsVec <- as.matrix(colnames(genoNum))
 rsVec <- as.list(rsVec)
 aa <- mclapply(rsVec,GWAS,mc.cores=8)
 out <- do.call(cbind,aa)
-fldl_wk0_p3 <- data.frame(t(out))
+fldl.wk0.p3 <- data.frame(t(out))
 @
 
 \subsection{Summarizing and Visualization}
 
-We now have a new dataset that we write to a file that contains rsNumber, Estimate, Standard Error, Zvalues and Pvalues
+**Put in Merge stuff
+
+
+We now have a new dataset that contains rsNumbers, Estimates, Standard Errors, Zvalues and Pvalues.
 
 <<data, eval=FALSE>>=
 names(fldl_wk0_p3) <- c("Estimate","SE","Zvalue","Pvalue")
 fldl_wk0_p3$rsNumber <- rsVec
 fldl_wk0_p3 <- as.matrix(fldl_wk0_p3)
-write.csv(fldl_wk0_p3,"/home/ramoser/fldl_wk0_p3")
+write.csv(fldl_wk0_p3,"/home/ramoser/fldl-wk0_p3")
 @
 
-~~~manhattan plots and mapping to genes, sorting by p-val
+Our new dataset contains only part of the variables needed to accurately summarize the data. We need to be able to determine which SNP cooresponds to which chromosome, gene and type. To do so we load in a dataset that contains this information for the RS numbers and merge with our existing dataset.   
 
+<<merging, eval= FALSE>>=
+baseline1 <- read.csv("fldl_wk0_p3.txt", header = T)
+baseline1 <- baseline1[, -1]
+
+merge1 <- read.table("2013-08-12-AnnotationSNPsToGenes.txt", sep="\t")
+merge1$rsNumber <- merge1$snp
+merge1 <- merge1[, c(1:5,7)]
+
+baseline2 <- merge(baseline1, merge1, by = "rsNumber")
+
+@
+
+In this case, we are only interested in looking at the following gene types: exonic, intronic, splicing, UTR3, UTR5, downstream, exonic;splicing, and upstream. Thus, we keep only these types and sort by P-values. \\
+
+*Why only these? Is this standard, should I describe each of these gene types? I feel like there is a bit more ``meat" needed here.
+
+<<Types to keep, eval=FALSE>>=
+#Keeping Gene Types:exonic, intronic, splicing, UTR3, UTR5, downstream, exonic;splicing, upstream
+
+keep1 <- c("exonic", "intronic", "splicing", "UTR3", "UTR5", "downstream", "exonic;splicing", "upstream")
+baseline3 <- baseline2[is.element(el=baseline2$type, set=keep1), ]
+baseline3 <- baseline3[order(baseline3$Pvalue),]
+@
+
+In this example we are interested in P-values $< 5*10^{-5}$. Thus, we create a subset of SNPs with those P-values and summarize them in a table. Furthermore, we drop ``chr" to report just chromosome numbers and save the resulting table.
+
+<<pvals, eval=FALSE>>=
+baseTable <- baseline3[baseline3$Pvalue <= 5*10^(-5), ]
+
+baseline3$chr<-substring(baseline3$chr, 4,5) 
+baseline3$chr<-as.numeric(as.character(baseline3$chr))                                            
+
+write.csv(baseline3,"baseline.txt")
+
+xtable(baseTable)
+@
+
+
+Now that we have a complete dataset with SNPs, chromosome, gene type, etc., we can create a Manhattan Plot to view the data. Below is a function that will create a Manhattan Plot. A Manhattan plot vizualizes where chromosome numbers are displayed along the $x$-axis an  the negative logarithm of the association P-value for each SNP on the Y-axis. This is useful when trying to determine if the association between the SNP and the chromosome is significant.\\
+
+* is chromosome the right word? Or homolog or haplotype?
+*Greg, I can't get this code to actually work. Am I missing something?
+
+<<Manhattan Plot function, eval=FALSE>>=
+one=read.csv("baseline.txt", header=T)
+position=one$Pos/1000000
+chr=one$Chr
+nsnp=as.numeric(table(chr))[1:22]
+pvalue=one$Pvalue
+
+POS=NULL
+POS[1:nsnp[1]]=position[chr==1]
+PVAL=NULL
+PVAL[1:nsnp[1]]=pvalue[chr==1]
+COL=NULL
+COL[1:nsnp[1]]="blue"
+TEXT.POS=NULL
+TEXT.POS[1]=mean(POS)
+for(CHR in 2:22){
+  total.prev=length(POS)
+  start=sort(POS)[total.prev]
+  POS[(total.prev+1):(total.prev+nsnp[CHR])]=start+position[chr==CHR]
+  PVAL[(total.prev+1):(total.prev+nsnp[CHR])]=pvalue[chr==CHR]
+  if(CHR%%2==0){a="lightblue4"}
+  if(CHR%%2==1){a="blue"}
+  COL[(total.prev+1):(total.prev+nsnp[CHR])]=rep(a,nsnp[CHR])
+  TEXT.POS[CHR]=start+mean(position[chr==CHR])
+}
+@
+
+Now, we can creat the Manhattan Plot.
+
+<<plotting the manhattan, , eval=FALSE>>=
+bitmap(file="manhattan.jpeg",type="jpeg",width=10,height=6,res=432,pointsize=8)
+par(mfrow=c(1,1),las=1,xaxs="i",yaxs="i")
+plot(POS,-log10(PVAL),pch=20,col=COL,xlab="",ylab="-log10(p-value)",axes=F,ylim=c(0,8))
+axis(2)
+abline(h=0)
+text(TEXT.POS,-0.5,seq(1,22,by=1),xpd=TRUE)
+title("LVMASS = SNP + AGE + GENDER")
+abline(h=3,col="green")
+abline(h=4,col="orange")
+abline(h=5,col="red")
+abline(h=6,col="purple")
+abline(h=7,col="cyan")
+dev.off()
+@
 
 
 \newpage

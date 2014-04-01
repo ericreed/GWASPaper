@@ -66,6 +66,7 @@
 \usepackage{geometry}
 \pagestyle{fancy}
 \usepackage{graphicx}
+\usepackage{undertilde}
 
 
 
@@ -178,8 +179,8 @@ Therefore, given the frequency of a certain allele, we should not only be able p
 $$p^2 +2pq+q^2=1$$
 Here, the proportion of the homozygous major genotype is predicted as $p^2$, the hetrozygous genotype is predictedas $2pq$, and the proportion of the homozygous recessive genotype  is predictted as $q^2$. Since we can't expect the observed values to precisely match the exected values in our samples, a $\chi^2$-test statistic is used to measure the departure between the expected number of a given genotype and the observed number of a given genotype to obtain a p-value.  If the p-value is above a certain cut-off, we assume that the allele frequencies comply with Hardy-Weinberg Equilibrium. 
 
-Though Hardy-Weinberg Equilibrium can be violated via population admixture and stratification, to such cases we would still consider the associations between genotype and phentoype to be informative, they may also occur as a result of genotyping errors.  Therefore, it is common prectice to remove the data for SNPS that violate Hardy-Weinberg Equilibrium. In the following example we have chosen a cutoff p-value of 0.001.
-It is also important to adjust for multiple comparisons. A conservative number of comparisons to use would be the number of SNPs in our analysis, however we will use a somewhat liberal value of 1000.
+Though Hardy-Weinberg Equilibrium can be violated via population admixture and stratification, and in such cases we would still consider the associations between genotype and phentoype to be informative, they may also occur as a result of genotyping errors.  Therefore, it is common prectice to remove the data for SNPS that violate Hardy-Weinberg Equilibrium. In the following example we have chosen a cutoff p-value of 0.001.
+It is also important to adjust for multiple comparisons. A conservative number of comparisons would be the number of SNPs in our analysis, however we will use a somewhat liberal value of 1000.
 
 \begin{knitrout}
 \definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
@@ -281,35 +282,42 @@ Next, we will merge the principal components with the phenotype file. In order t
 
 \section{Genome-Wide Association Study (GWAS) Analysis}
 
-~~Question: do i need the Paragraph about GWAS since this should be in the intro???\\
-
-Could you explain these models to me: additive and dominant\\
-
-Multiple methods are used to analyse GWAS data: Linkage analysis, Admixture mapping and Assosciation anaylysis. In our case, we are doing association analysis since we have a high number of SNPs and these subjects are assumed not to be correlated.Furthermore, we will be applying logistic regression since it easily incorporates Genetic models (additive, dominant or recessive).\\
-
-Genetic models commonly used are Additive Models, Dominant Models and Recessive models. These are used to evaluate the interaction between alleles on homolougous chromosomes. \\
+Multiple methods are used to analyse GWAS data: Linkage analysis, Admixture mapping and Assosciation anaylysis. since we have a high number of SNPs and these subjects are assumed not to be correlated, we will be conducting an Association analysis . Furthermore, we will be applying logistic regression since it easily incorporates Genetic models (additive, dominant or recessive). Genetic models commonly used are Additive Models, Dominant Models and Recessive models. These are used to evaluate the interaction between alleles on homolougous chromosomes. \\
 
 \textsc{Additive}\\
-Additive models are used to evaluate additive structure and reveal associations that depend additively based on the allele classification. These models assume that if having a single recessive allele will increase the trait by some $x$, 
-%where $x \in \mathbb{R}$, 
-then having two recessive alleles in the homologs will increase the trait by $2x$. This model can be written as:
+Additive models are used to evaluate additive structure and reveal associations that depend additively based on the allele classification. These models assume that if having a single minor allele will increase the quantitative trait we are interested in, $y$, by $\beta$, then having two minor alleles in the homologs will increase $y$ by $2\beta$. \\
+To represent this model, let $A$ and $a$ represent the possible alleles at a given SNP locus where $A$ is the major allele and $a$ is the minor allele. Let $I(x_{i,k} = a)$ be an indicator for whether the allele on the $k$th homolog ($k = 1,2$) is the minor allele for individual $i$, then this model can be written as 
+
+\begin{eqnarray}
+y_i &=& \alpha + \beta [I(x_{i,1} = a) + I(x_{i,2} = a)] + \epsilon_i
+\end{eqnarray}
 
 \textsc{Dominant}\\
-Dominant models assume that the homologs conatain at least one dominant allele for the trait to exist. This model can be written as:
+Dominant models assume that the homologs conatain at least one major allele for $y$ to exist. Having one or more copies of $a$ will increase $y$ by $\beta$. This model can be written as:
+
 \begin{eqnarray}
-y_{i} = \beta_0 + \beta
+y_i &=& \alpha + \beta I(x_{i,1} = a \; \text{or} \; x_{i,2} = a) + \epsilon_i
 \end{eqnarray}
 
 \textsc{Recessive}\\
-Recessive models assume both homologs contain the recessive allele for the trait to exist. This model can be written as:
+Recessive models assume both homologs contain the minor allele for $y$ to exist. This model can be written as:
+
+\begin{eqnarray}
+y_i &=& \alpha + \beta [I(x_{i,1} = a) * I(x_{i,2} = a)] + \epsilon_i
+\end{eqnarray}
+
+*What is the format of citations? Should we do a .bib file? I need to cite Andrea's book.
+
 
 \subsection{Model}
 
-To run the GWAS analysis our ??? model of association includes age, gender, race and the first ten principle components.
+To run the GWAS analysis the additive model of association should include demographic, clinical, environmental and other relevant covariates such as Age, Sex and Race. This model can be written as
+\begin{eqnarray*}
+\utilde{Y} &=& \bf{X} \bf{\beta} + \bf{P} \alpha + \gamma _j \text{SNP} _j + \utilde{\epsilon}
+\end{eqnarray*}
+where $\gamma _j \text{SNP} _j$ is the SNP effect, $X$ is a vector of the relevant covariates and $P$ is a vector of principle comonents, the demension of which depends on the number of principle components chosen to be used in the analysis.\\
 
-\begin{eqnarray}
-Y_i &=& \beta_0 + \beta_1 X_1 + \cdots + \beta_{13} X_{13} \\
-\end{eqnarray}
+*Question: $\beta$ is bf too, right? What about $\alpha$?
 
 \subsection{Fitting the Model}
 
@@ -323,8 +331,8 @@ The ``a" object computes and returns a list of summary statistics of the fitted 
     \hlkwd{print}\hlstd{(rsNumber)}
     \hlstd{tempSNP} \hlkwb{<-} \hlkwd{data.frame}\hlstd{(}\hlkwc{FamID} \hlstd{=} \hlkwd{row.names}\hlstd{(genoNum),} \hlkwc{snp} \hlstd{= genoNum[, rsNumber])}
     \hlstd{dat} \hlkwb{<-} \hlkwd{merge}\hlstd{(phenoSub, tempSNP,} \hlkwc{by.x} \hlstd{=} \hlstr{"FamID"}\hlstd{,} \hlkwc{by.y} \hlstd{=} \hlstr{"FamID"}\hlstd{,} \hlkwc{all.x} \hlstd{=} \hlnum{TRUE}\hlstd{)}
-    \hlstd{a} \hlkwb{<-} \hlkwd{summary}\hlstd{(}\hlkwd{lm}\hlstd{(fldl_wk0} \hlopt{~} \hlstd{age} \hlopt{+} \hlstd{sex} \hlopt{+} \hlstd{raceth} \hlopt{+} \hlstd{pc1} \hlopt{+} \hlstd{pc2} \hlopt{+} \hlstd{pc3} \hlopt{+} \hlstd{pc4} \hlopt{+}
-        \hlstd{pc5} \hlopt{+} \hlstd{pc6} \hlopt{+} \hlstd{pc7} \hlopt{+} \hlstd{pc8} \hlopt{+} \hlstd{pc9} \hlopt{+} \hlstd{pc10} \hlopt{+} \hlstd{snp,} \hlkwc{data} \hlstd{= dat))}
+    \hlstd{a} \hlkwb{<-} \hlkwd{summary}\hlstd{(}\hlkwd{glm}\hlstd{(fldl_wk0} \hlopt{~} \hlstd{age} \hlopt{+} \hlstd{sex} \hlopt{+} \hlstd{raceth} \hlopt{+} \hlstd{pc1} \hlopt{+} \hlstd{pc2} \hlopt{+} \hlstd{pc3} \hlopt{+} \hlstd{pc4} \hlopt{+}
+        \hlstd{pc5} \hlopt{+} \hlstd{pc6} \hlopt{+} \hlstd{pc7} \hlopt{+} \hlstd{pc8} \hlopt{+} \hlstd{pc9} \hlopt{+} \hlstd{pc10} \hlopt{+} \hlstd{snp,} \hlkwc{family} \hlstd{= gaussian,} \hlkwc{data} \hlstd{= dat))}
     \hlstd{out} \hlkwb{<-} \hlkwd{as.matrix}\hlstd{(a}\hlopt{$}\hlstd{coefficients[}\hlstr{"snp"}\hlstd{, ])}
     \hlstd{out}
 \hlstd{\}}
@@ -333,7 +341,9 @@ The ``a" object computes and returns a list of summary statistics of the fitted 
 \end{knitrout}
 
 %When I ran the glm vs. the lm, they seemed to run at the same speed. I get the same results.
-%
+%I, Emily, ran as well and there was no difference. So I put in glm just to make it general. 
+
+
 \subsubsection{Running a Parallel Analysis}
 
 To run the linear regression on our data, we first need to install the ``parallel" package to be able to run a parallel analysis, an analysis on multiple cores.
@@ -356,7 +366,7 @@ We use ``mclapply()" to run parallel analysis on 8 different cores to save time.
 \hlstd{rsVec} \hlkwb{<-} \hlkwd{as.list}\hlstd{(rsVec)}
 \hlstd{aa} \hlkwb{<-} \hlkwd{mclapply}\hlstd{(rsVec, GWAS,} \hlkwc{mc.cores} \hlstd{=} \hlnum{8}\hlstd{)}
 \hlstd{out} \hlkwb{<-} \hlkwd{do.call}\hlstd{(cbind, aa)}
-\hlstd{fldl_wk0_p3} \hlkwb{<-} \hlkwd{data.frame}\hlstd{(}\hlkwd{t}\hlstd{(out))}
+\hlstd{fldl.wk0.p3} \hlkwb{<-} \hlkwd{data.frame}\hlstd{(}\hlkwd{t}\hlstd{(out))}
 \end{alltt}
 \end{kframe}
 \end{knitrout}
@@ -364,7 +374,10 @@ We use ``mclapply()" to run parallel analysis on 8 different cores to save time.
 
 \subsection{Summarizing and Visualization}
 
-We now have a new dataset that we write to a file that contains rsNumber, Estimate, Standard Error, Zvalues and Pvalues
+**Put in Merge stuff
+
+
+We now have a new dataset that contains rsNumbers, Estimates, Standard Errors, Zvalues and Pvalues.
 
 \begin{knitrout}
 \definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
@@ -372,13 +385,133 @@ We now have a new dataset that we write to a file that contains rsNumber, Estima
 \hlkwd{names}\hlstd{(fldl_wk0_p3)} \hlkwb{<-} \hlkwd{c}\hlstd{(}\hlstr{"Estimate"}\hlstd{,} \hlstr{"SE"}\hlstd{,} \hlstr{"Zvalue"}\hlstd{,} \hlstr{"Pvalue"}\hlstd{)}
 \hlstd{fldl_wk0_p3}\hlopt{$}\hlstd{rsNumber} \hlkwb{<-} \hlstd{rsVec}
 \hlstd{fldl_wk0_p3} \hlkwb{<-} \hlkwd{as.matrix}\hlstd{(fldl_wk0_p3)}
-\hlkwd{write.csv}\hlstd{(fldl_wk0_p3,} \hlstr{"/home/ramoser/fldl_wk0_p3"}\hlstd{)}
+\hlkwd{write.csv}\hlstd{(fldl_wk0_p3,} \hlstr{"/home/ramoser/fldl-wk0_p3"}\hlstd{)}
 \end{alltt}
 \end{kframe}
 \end{knitrout}
 
 
-~~~manhattan plots and mapping to genes, sorting by p-val
+Our new dataset contains only part of the variables needed to accurately summarize the data. We need to be able to determine which SNP cooresponds to which chromosome, gene and type. To do so we load in a dataset that contains this information for the RS numbers and merge with our existing dataset.   
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlstd{baseline1} \hlkwb{<-} \hlkwd{read.csv}\hlstd{(}\hlstr{"fldl_wk0_p3.txt"}\hlstd{,} \hlkwc{header} \hlstd{= T)}
+\hlstd{baseline1} \hlkwb{<-} \hlstd{baseline1[,} \hlopt{-}\hlnum{1}\hlstd{]}
+
+\hlstd{merge1} \hlkwb{<-} \hlkwd{read.table}\hlstd{(}\hlstr{"2013-08-12-AnnotationSNPsToGenes.txt"}\hlstd{,} \hlkwc{sep} \hlstd{=} \hlstr{"\textbackslash{}t"}\hlstd{)}
+\hlstd{merge1}\hlopt{$}\hlstd{rsNumber} \hlkwb{<-} \hlstd{merge1}\hlopt{$}\hlstd{snp}
+\hlstd{merge1} \hlkwb{<-} \hlstd{merge1[,} \hlkwd{c}\hlstd{(}\hlnum{1}\hlopt{:}\hlnum{5}\hlstd{,} \hlnum{7}\hlstd{)]}
+
+\hlstd{baseline2} \hlkwb{<-} \hlkwd{merge}\hlstd{(baseline1, merge1,} \hlkwc{by} \hlstd{=} \hlstr{"rsNumber"}\hlstd{)}
+\end{alltt}
+\end{kframe}
+\end{knitrout}
+
+
+In this case, we are only interested in looking at the following gene types: exonic, intronic, splicing, UTR3, UTR5, downstream, exonic;splicing, and upstream. Thus, we keep only these types and sort by P-values. \\
+
+*Why only these? Is this standard, should I describe each of these gene types? I feel like there is a bit more ``meat" needed here.
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlcom{# Keeping Gene Types:exonic, intronic, splicing, UTR3, UTR5, downstream,}
+\hlcom{# exonic;splicing, upstream}
+
+\hlstd{keep1} \hlkwb{<-} \hlkwd{c}\hlstd{(}\hlstr{"exonic"}\hlstd{,} \hlstr{"intronic"}\hlstd{,} \hlstr{"splicing"}\hlstd{,} \hlstr{"UTR3"}\hlstd{,} \hlstr{"UTR5"}\hlstd{,} \hlstr{"downstream"}\hlstd{,} \hlstr{"exonic;splicing"}\hlstd{,}
+    \hlstr{"upstream"}\hlstd{)}
+\hlstd{baseline3} \hlkwb{<-} \hlstd{baseline2[}\hlkwd{is.element}\hlstd{(}\hlkwc{el} \hlstd{= baseline2}\hlopt{$}\hlstd{type,} \hlkwc{set} \hlstd{= keep1), ]}
+\hlstd{baseline3} \hlkwb{<-} \hlstd{baseline3[}\hlkwd{order}\hlstd{(baseline3}\hlopt{$}\hlstd{Pvalue), ]}
+\end{alltt}
+\end{kframe}
+\end{knitrout}
+
+
+In this example we are interested in P-values $< 5*10^{-5}$. Thus, we create a subset of SNPs with those P-values and summarize them in a table. Furthermore, we drop ``chr" to report just chromosome numbers and save the resulting table.
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlstd{baseTable} \hlkwb{<-} \hlstd{baseline3[baseline3}\hlopt{$}\hlstd{Pvalue} \hlopt{<=} \hlnum{5} \hlopt{*} \hlnum{10}\hlopt{^}\hlstd{(}\hlopt{-}\hlnum{5}\hlstd{), ]}
+
+\hlstd{baseline3}\hlopt{$}\hlstd{chr} \hlkwb{<-} \hlkwd{substring}\hlstd{(baseline3}\hlopt{$}\hlstd{chr,} \hlnum{4}\hlstd{,} \hlnum{5}\hlstd{)}
+\hlstd{baseline3}\hlopt{$}\hlstd{chr} \hlkwb{<-} \hlkwd{as.numeric}\hlstd{(}\hlkwd{as.character}\hlstd{(baseline3}\hlopt{$}\hlstd{chr))}
+
+\hlkwd{write.csv}\hlstd{(baseline3,} \hlstr{"baseline.txt"}\hlstd{)}
+
+\hlkwd{xtable}\hlstd{(baseTable)}
+\end{alltt}
+\end{kframe}
+\end{knitrout}
+
+
+
+Now that we have a complete dataset with SNPs, chromosome, gene type, etc., we can create a Manhattan Plot to view the data. Below is a function that will create a Manhattan Plot. A Manhattan plot vizualizes where chromosome numbers are displayed along the $x$-axis an  the negative logarithm of the association P-value for each SNP on the Y-axis. This is useful when trying to determine if the association between the SNP and the chromosome is significant.\\
+
+* is chromosome the right word? Or homolog or haplotype?
+*Greg, I can't get this code to actually work. Am I missing something?
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlstd{one} \hlkwb{=} \hlkwd{read.csv}\hlstd{(}\hlstr{"baseline.txt"}\hlstd{,} \hlkwc{header} \hlstd{= T)}
+\hlstd{position} \hlkwb{=} \hlstd{one}\hlopt{$}\hlstd{Pos}\hlopt{/}\hlnum{1e+06}
+\hlstd{chr} \hlkwb{=} \hlstd{one}\hlopt{$}\hlstd{Chr}
+\hlstd{nsnp} \hlkwb{=} \hlkwd{as.numeric}\hlstd{(}\hlkwd{table}\hlstd{(chr))[}\hlnum{1}\hlopt{:}\hlnum{22}\hlstd{]}
+\hlstd{pvalue} \hlkwb{=} \hlstd{one}\hlopt{$}\hlstd{Pvalue}
+
+\hlstd{POS} \hlkwb{=} \hlkwa{NULL}
+\hlstd{POS[}\hlnum{1}\hlopt{:}\hlstd{nsnp[}\hlnum{1}\hlstd{]]} \hlkwb{=} \hlstd{position[chr} \hlopt{==} \hlnum{1}\hlstd{]}
+\hlstd{PVAL} \hlkwb{=} \hlkwa{NULL}
+\hlstd{PVAL[}\hlnum{1}\hlopt{:}\hlstd{nsnp[}\hlnum{1}\hlstd{]]} \hlkwb{=} \hlstd{pvalue[chr} \hlopt{==} \hlnum{1}\hlstd{]}
+\hlstd{COL} \hlkwb{=} \hlkwa{NULL}
+\hlstd{COL[}\hlnum{1}\hlopt{:}\hlstd{nsnp[}\hlnum{1}\hlstd{]]} \hlkwb{=} \hlstr{"blue"}
+\hlstd{TEXT.POS} \hlkwb{=} \hlkwa{NULL}
+\hlstd{TEXT.POS[}\hlnum{1}\hlstd{]} \hlkwb{=} \hlkwd{mean}\hlstd{(POS)}
+\hlkwa{for} \hlstd{(CHR} \hlkwa{in} \hlnum{2}\hlopt{:}\hlnum{22}\hlstd{) \{}
+    \hlstd{total.prev} \hlkwb{=} \hlkwd{length}\hlstd{(POS)}
+    \hlstd{start} \hlkwb{=} \hlkwd{sort}\hlstd{(POS)[total.prev]}
+    \hlstd{POS[(total.prev} \hlopt{+} \hlnum{1}\hlstd{)}\hlopt{:}\hlstd{(total.prev} \hlopt{+} \hlstd{nsnp[CHR])]} \hlkwb{=} \hlstd{start} \hlopt{+} \hlstd{position[chr} \hlopt{==}
+        \hlstd{CHR]}
+    \hlstd{PVAL[(total.prev} \hlopt{+} \hlnum{1}\hlstd{)}\hlopt{:}\hlstd{(total.prev} \hlopt{+} \hlstd{nsnp[CHR])]} \hlkwb{=} \hlstd{pvalue[chr} \hlopt{==} \hlstd{CHR]}
+    \hlkwa{if} \hlstd{(CHR}\hlopt{%%}\hlnum{2} \hlopt{==} \hlnum{0}\hlstd{) \{}
+        \hlstd{a} \hlkwb{=} \hlstr{"lightblue4"}
+    \hlstd{\}}
+    \hlkwa{if} \hlstd{(CHR}\hlopt{%%}\hlnum{2} \hlopt{==} \hlnum{1}\hlstd{) \{}
+        \hlstd{a} \hlkwb{=} \hlstr{"blue"}
+    \hlstd{\}}
+    \hlstd{COL[(total.prev} \hlopt{+} \hlnum{1}\hlstd{)}\hlopt{:}\hlstd{(total.prev} \hlopt{+} \hlstd{nsnp[CHR])]} \hlkwb{=} \hlkwd{rep}\hlstd{(a, nsnp[CHR])}
+    \hlstd{TEXT.POS[CHR]} \hlkwb{=} \hlstd{start} \hlopt{+} \hlkwd{mean}\hlstd{(position[chr} \hlopt{==} \hlstd{CHR])}
+\hlstd{\}}
+\end{alltt}
+\end{kframe}
+\end{knitrout}
+
+
+Now, we can creat the Manhattan Plot.
+
+\begin{knitrout}
+\definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
+\begin{alltt}
+\hlkwd{bitmap}\hlstd{(}\hlkwc{file} \hlstd{=} \hlstr{"manhattan.jpeg"}\hlstd{,} \hlkwc{type} \hlstd{=} \hlstr{"jpeg"}\hlstd{,} \hlkwc{width} \hlstd{=} \hlnum{10}\hlstd{,} \hlkwc{height} \hlstd{=} \hlnum{6}\hlstd{,} \hlkwc{res} \hlstd{=} \hlnum{432}\hlstd{,}
+    \hlkwc{pointsize} \hlstd{=} \hlnum{8}\hlstd{)}
+\hlkwd{par}\hlstd{(}\hlkwc{mfrow} \hlstd{=} \hlkwd{c}\hlstd{(}\hlnum{1}\hlstd{,} \hlnum{1}\hlstd{),} \hlkwc{las} \hlstd{=} \hlnum{1}\hlstd{,} \hlkwc{xaxs} \hlstd{=} \hlstr{"i"}\hlstd{,} \hlkwc{yaxs} \hlstd{=} \hlstr{"i"}\hlstd{)}
+\hlkwd{plot}\hlstd{(POS,} \hlopt{-}\hlkwd{log10}\hlstd{(PVAL),} \hlkwc{pch} \hlstd{=} \hlnum{20}\hlstd{,} \hlkwc{col} \hlstd{= COL,} \hlkwc{xlab} \hlstd{=} \hlstr{""}\hlstd{,} \hlkwc{ylab} \hlstd{=} \hlstr{"-log10(p-value)"}\hlstd{,}
+    \hlkwc{axes} \hlstd{= F,} \hlkwc{ylim} \hlstd{=} \hlkwd{c}\hlstd{(}\hlnum{0}\hlstd{,} \hlnum{8}\hlstd{))}
+\hlkwd{axis}\hlstd{(}\hlnum{2}\hlstd{)}
+\hlkwd{abline}\hlstd{(}\hlkwc{h} \hlstd{=} \hlnum{0}\hlstd{)}
+\hlkwd{text}\hlstd{(TEXT.POS,} \hlopt{-}\hlnum{0.5}\hlstd{,} \hlkwd{seq}\hlstd{(}\hlnum{1}\hlstd{,} \hlnum{22}\hlstd{,} \hlkwc{by} \hlstd{=} \hlnum{1}\hlstd{),} \hlkwc{xpd} \hlstd{=} \hlnum{TRUE}\hlstd{)}
+\hlkwd{title}\hlstd{(}\hlstr{"LVMASS = SNP + AGE + GENDER"}\hlstd{)}
+\hlkwd{abline}\hlstd{(}\hlkwc{h} \hlstd{=} \hlnum{3}\hlstd{,} \hlkwc{col} \hlstd{=} \hlstr{"green"}\hlstd{)}
+\hlkwd{abline}\hlstd{(}\hlkwc{h} \hlstd{=} \hlnum{4}\hlstd{,} \hlkwc{col} \hlstd{=} \hlstr{"orange"}\hlstd{)}
+\hlkwd{abline}\hlstd{(}\hlkwc{h} \hlstd{=} \hlnum{5}\hlstd{,} \hlkwc{col} \hlstd{=} \hlstr{"red"}\hlstd{)}
+\hlkwd{abline}\hlstd{(}\hlkwc{h} \hlstd{=} \hlnum{6}\hlstd{,} \hlkwc{col} \hlstd{=} \hlstr{"purple"}\hlstd{)}
+\hlkwd{abline}\hlstd{(}\hlkwc{h} \hlstd{=} \hlnum{7}\hlstd{,} \hlkwc{col} \hlstd{=} \hlstr{"cyan"}\hlstd{)}
+\hlkwd{dev.off}\hlstd{()}
+\end{alltt}
+\end{kframe}
+\end{knitrout}
 
 
 
