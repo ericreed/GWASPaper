@@ -172,10 +172,14 @@ The call rate is the most straight forward of the three criteria, as it means to
 If every study participant is homozygous at a given SNP, then there is nothing to infer about the relationship between genotype and phenotype, as each participant has the same genotype at this SNP.  This is a common occurence with the major allele, as it is often much more common in a given population.  Therefore, it is important to keep only the SNPs for which we have a certain proportion of minor alleles present in the study sample.  In the example to follow we will use a Minor Allele Frequency, which will remove SNPs for which the minor allele frequency is less than 1 \%.
 \subsubsection*{Hardy-Weinberg Equilibrium}
 The Hardy-Weingberg Equilibrium is based off the principle that if two alleles are possible for a given genotype, then the sum of the probabilities of having a given allele at either homologous chromosome is 1.
-\centerline{$p+q=1$}
-Where $p$ and $q$ represent the probabilities of having either allele at either homologous chromosome.
-Therefore, given the frequency of a certain allele, we should not only be able predict the frequency of the other allele, but also the proportion of homozygous major, heterozygous, and homozygous dominant individuals in a given population. Hardy-Weinberg Equilibrium can be violated via population admixture and stratification. In such cases we would still consider the associations between genotype and phentoype to be informative. However, violations may also occur as a result of genotyping errors, which may greatly decrease the validity of the results.  Therefore, it is common prectice to remove the data for SNPS that violate Hardy-Weinberg Equilibrium. We cannot expect our samples to exhibit this principle perfectly, however we can calculate the p-value that this principle is being followed, and set a threshold to keep only data with Hardy-Weinberg equlibrium p-values below a certain cutoff. In the example to follow we have chosen a cutoff of 0.001.
+$$p+q=1$$
+Here, $p$ and $q$ represent the probabilities of having either allele at each of the homologous chromosomes.
+Therefore, given the frequency of a certain allele, we should not only be able predict the frequency of the other allele, but also the proportion of homozygous major, heterozygous, and homozygous dominant individuals in a given population.
+$$p^2 +2pq+q^2=1$$
+Here, the proportion of the homozygous major genotype is predicted as $p^2$, the hetrozygous genotype is predictedas $2pq$, and the proportion of the homozygous recessive genotype  is predictted as $q^2$. Since we can't expect the observed values to precisely match the exected values in our samples, a $\chi^2$-test statistic is used to measure the departure between the expected number of a given genotype and the observed number of a given genotype to obtain a p-value.  If the p-value is above a certain cut-off, we assume that the allele frequencies comply with Hardy-Weinberg Equilibrium. 
 
+Though Hardy-Weinberg Equilibrium can be violated via population admixture and stratification, to such cases we would still consider the associations between genotype and phentoype to be informative, they may also occur as a result of genotyping errors.  Therefore, it is common prectice to remove the data for SNPS that violate Hardy-Weinberg Equilibrium. In the following example we have chosen a cutoff p-value of 0.001.
+It is also important to adjust for multiple comparisons. A conservative number of comparisons to use would be the number of SNPs in our analysis, however we will use a somewhat liberal value of 1000.
 
 \begin{knitrout}
 \definecolor{shadecolor}{rgb}{0.969, 0.969, 0.969}\color{fgcolor}\begin{kframe}
@@ -183,9 +187,11 @@ Therefore, given the frequency of a certain allele, we should not only be able p
 \hlstd{call} \hlkwb{<-} \hlnum{0.9}
 \hlstd{minor} \hlkwb{<-} \hlnum{0.01}
 \hlstd{hardy} \hlkwb{<-} \hlnum{0.001}
+\hlstd{comp} \hlkwb{<-} \hlnum{1000}
 \hlstd{snpsum.col} \hlkwb{<-} \hlkwd{col.summary}\hlstd{(geno)}
 \hlstd{use} \hlkwb{<-} \hlstd{(}\hlopt{!}\hlkwd{is.na}\hlstd{(snpsum.col}\hlopt{$}\hlstd{MAF)} \hlopt{&} \hlstd{snpsum.col}\hlopt{$}\hlstd{MAF} \hlopt{>} \hlstd{minor)} \hlopt{&} \hlstd{(}\hlopt{!}\hlkwd{is.na}\hlstd{(snpsum.col}\hlopt{$}\hlstd{z.HWE)} \hlopt{&}
-    \hlstd{snpsum.col}\hlopt{$}\hlstd{z.HWE}\hlopt{^}\hlnum{2} \hlopt{<} \hlkwd{qnorm}\hlstd{(hardy}\hlopt{/}\hlnum{2}\hlstd{)}\hlopt{^}\hlnum{2}\hlstd{)} \hlopt{&} \hlstd{snpsum.col}\hlopt{$}\hlstd{Call.rate} \hlopt{>=} \hlstd{call}  \hlcom{#This creates a Boolean Vector of 'TRUE' and 'FALSE'}
+    \hlstd{snpsum.col}\hlopt{$}\hlstd{z.HWE}\hlopt{^}\hlnum{2} \hlopt{<} \hlkwd{qnorm}\hlstd{((hardy}\hlopt{/}\hlnum{2}\hlstd{)}\hlopt{/}\hlstd{comp)}\hlopt{^}\hlnum{2}\hlstd{)} \hlopt{&} \hlstd{snpsum.col}\hlopt{$}\hlstd{Call.rate} \hlopt{>=}
+    \hlstd{call}  \hlcom{#This creates a Boolean Vector of 'TRUE' and 'FALSE'}
 \hlstd{use[}\hlkwd{is.na}\hlstd{(use)]} \hlkwb{<-} \hlnum{FALSE}
 \hlstd{genoBim} \hlkwb{<-} \hlstd{genoBim[use, ]}  \hlcom{#This will filter the .bim file}
 \hlstd{geno} \hlkwb{<-} \hlstd{geno[, use]}  \hlcom{#This will filter our genotype file.}
