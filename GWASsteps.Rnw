@@ -88,9 +88,9 @@ If every study participant is homozygous at a given SNP, then there is nothing t
 \subsubsection*{Hardy-Weinberg Equilibrium}
 The Hardy-Weingberg Equilibrium is based off the principle that if two alleles are possible for a given genotype, then the sum of the probabilities of having a given allele at each chromosome is 1. This can be represented as:
 $$p+q=1$$
-where $p$ and $q$ represent the probabilities of either allele. Therefore, given the frequency of a certain allele, we should not only be able predict the frequency of the other allele, but also the proportion of homozygous major, heterozygous, and homozygous dominant individuals in a given population,  using the formula:
+where $p$ and $q$ represent the probabilities of either allele. Therefore, given the frequency of a certain allele, we should not only be able predict the frequency of the other allele, but also the proportion of homozygous major, heterozygous, and homozygous dominant individuals in a given population  using the formula:
 $$p^2 +2pq+q^2=1$$
-Here, the proportion of the homozygous major genotype is predicted as $p^2$, the hetrozygous genotype is predictedas $2pq$, and the proportion of the homozygous recessive genotype is predicted as $q^2$. Since we can't expect the observed values of each genotype to precisely match the exected values in our samples, a $\chi^2$-test statistic is used to measure the departure between the expected number of a given genotype and the observed number of a given genotype to obtain a p-value.  If the p-value is above a certain cut-off, we assume that the allele frequencies comply with Hardy-Weinberg Equilibrium. 
+Here, the proportion of the homozygous major genotype is predicted as $p^2$, the hetrozygous genotype is predicted as $2pq$, and the proportion of the homozygous recessive genotype is predicted as $q^2$. Since we cannot expect the observed values of each genotype to precisely match the exected values in our sample, a $\chi^2$-test statistic is used to measure the departure between the expected number of a given genotype and the observed number of a given genotype to obtain a p-value.  If the p-value is above a certain cut-off, we assume that the allele frequencies comply with Hardy-Weinberg Equilibrium. 
 
 Though Hardy-Weinberg Equilibrium can be violated via population admixture and stratification, and in such cases we would still consider the associations between genotype and phentoype to be informative, they may also occur as a result of genotyping errors.  Therefore, it is common prectice to remove the data for SNPS that violate Hardy-Weinberg Equilibrium. In the following example we have chosen a cutoff p-value of 0.001.  Since we are dealing with multiple comparisons, it is usefule to then divide the p-value by a certain value. A conservative value here would be the total number of SNPs, however in this example we will use a somewhat generous value of 1000.
 
@@ -241,7 +241,7 @@ fldl_wk0_p3 <- as.matrix(fldl_wk0_p3)
 write.csv(fldl_wk0_p3,"/home/ramoser/fldl-wk0_p3")
 @
 
-Our new dataset contains only part of the variables needed to accurately summarize the data. We need to be able to determine which SNP cooresponds to which chromosome, and where that chromosome is located. To do so we load in a dataset that contains this information for the RS numbers and merge with our existing dataset. Note that the chromosome location, that is the variable coord1, depends on which build you are using. We are currently using build _____.
+Our new dataset contains only part of the variables needed to accurately summarize the data. We need to be able to determine which SNP cooresponds to which chromosome, and where that chromosome is located. To do so we load in a dataset that contains this information for the RS numbers and merge with our existing dataset. Note that the chromosome location, that is the variable coord1, depends on which build you are using. We are currently using build...
 
 <<merging, eval= FALSE>>=
 baseline1 <- read.csv("fldl_wk0_p3.txt", header = T)
