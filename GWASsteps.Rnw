@@ -161,46 +161,45 @@ phenoSub<-merge(phenoSub,pcs,by.x="FamID",by.y="FamID",all.x=TRUE)
 
 \section{Genome-Wide Association Study (GWAS) Analysis}
 
-Multiple methods are used to analyse GWAS data: Linkage analysis, Admixture mapping and Assosciation anaylysis. since we have a high number of SNPs and these subjects are assumed not to be correlated, we will be conducting an Association analysis . Furthermore, we will be applying logistic regression since it easily incorporates Genetic models (additive, dominant or recessive). Genetic models commonly used are Additive Models, Dominant Models and Recessive models. These are used to evaluate the interaction between alleles on homolougous chromosomes. \\
+\subsection{Fitting the Model}
+
+Multiple methods are used to analyse GWAS data: Linkage analysis, Admixture mapping and Assosciation anaylysis. since we have a high number of SNPs and these subjects are assumed not to be correlated, we will be conducting an Association analysis. Genetic models are used to incorporate the interaction between alleles on homolougous chromosomes. Genetic models commonly used are Additive Models, Dominant Models and Recessive models. \\
 
 \textsc{Additive}\\
 Additive models are used to evaluate additive structure and reveal associations that depend additively based on the allele classification. These models assume that if having a single minor allele will increase the quantitative trait we are interested in, $y$, by $\beta$, then having two minor alleles in the homologs will increase $y$ by $2\beta$. \\
-To represent this model, let $A$ and $a$ represent the possible alleles at a given SNP locus where $A$ is the major allele and $a$ is the minor allele. Let $I(x_{i,k} = a)$ be an indicator for whether the allele on the $k$th homolog ($k = 1,2$) is the minor allele for individual $i$, then this model can be written as 
+To represent this model, let $A$ and $a$ represent the possible alleles at a given SNP locus where $A$ is the major allele and $a$ is the minor allele. Let $I(x_{i,k} = a)$ be an indicator for whether the allele on the $k$th homolog ($k = 1,2$) is the minor allele for individual $i = 1, \cdots, n$, where $n$ is the number of observations, then this model can be written as 
 
 \begin{eqnarray}
-y_i &=& \alpha + \beta [I(x_{i,1} = a) + I(x_{i,2} = a)] + \epsilon_i
+g(E(y_i)) &=& \alpha + \beta [I(x_{i,1} = a) + I(x_{i,2} = a)]
 \end{eqnarray}
 
 \textsc{Dominant}\\
 Dominant models assume that the homologs conatain at least one major allele for $y$ to exist. Having one or more copies of $a$ will increase $y$ by $\beta$. This model can be written as:
 
 \begin{eqnarray}
-y_i &=& \alpha + \beta I(x_{i,1} = a \; \text{or} \; x_{i,2} = a) + \epsilon_i
+g(E(y_i)) &=& \alpha + \beta I(x_{i,1} = a \; \text{or} \; x_{i,2} = a)
 \end{eqnarray}
 
 \textsc{Recessive}\\
 Recessive models assume both homologs contain the minor allele for $y$ to exist. This model can be written as:
 
 \begin{eqnarray}
-y_i &=& \alpha + \beta [I(x_{i,1} = a) * I(x_{i,2} = a)] + \epsilon_i
+g(E(y_i)) &=& \alpha + \beta [I(x_{i,1} = a) * I(x_{i,2} = a)]
 \end{eqnarray}
 
-*What is the format of citations? Should we do a .bib file? I need to cite Andrea's book.
-
-
-\subsection{Model}
+\cite[p.~61]{foulkes09}
 
 To run the GWAS analysis the additive model of association should include demographic, clinical, environmental and other relevant covariates such as Age, Sex and Race. This model can be written as
-\begin{eqnarray*}
-\utilde{Y} &=& \bf{X} \bf{\beta} + \bf{P} \alpha + \gamma _j \text{SNP} _j + \utilde{\epsilon}
-\end{eqnarray*}
+
+\begin{eqnarray}
+g(E(\utilde{Y})) &=& \bf{X} \bf{\beta} + \bf{P} \bf{\alpha} + \gamma _j \text{SNP} _j
+\end{eqnarray}
+
 where $\gamma _j \text{SNP} _j$ is the SNP effect, $X$ is a vector of the relevant covariates and $P$ is a vector of principle comonents, the demension of which depends on the number of principle components chosen to be used in the analysis.\\
 
-*Question: $\beta$ is bf too, right? What about $\alpha$?
+\subsection{Example of GWAS Analysis Using R}
 
-\subsection{Fitting the Model}
-
-We create a GWAS function that will run our analysis. This function takes a subset of our data ``tempSNP" of ID numbers and RS Numbers. The linear regression model compares our filtered and merged dataset (in this case we are running an analysis on our baseline data) and adjusts for the variables of interest: 
+One way to run a GWAS analysis is to creat a We create a GWAS function. This function takes a subset of our data ``tempSNP" of ID numbers and RS Numbers. The linear regression model compares our filtered and merged dataset (in this case we are running an analysis on our baseline data) and adjusts for the variables of interest: 
 The ``a" object computes and returns a list of summary statistics of the fitted linear model, ``a" contains the SNP genotype on the x-axis and the phenotype on the y-axis. This function then maps the regression model for the filtered, merged dataset (in this case we are running an analysis on our baseline data) and adjusting for the variables of interest: Age, Sex, Race, the ten PCs and SNPs. The ``out" matrix pulls just the row that contains the estimate for the SNP from the linear model summary. 
 
 <<Function, eval=FALSE>>=
@@ -213,8 +212,6 @@ GWAS<-function(rsNumber){
   out
 }
 @
-%When I ran the glm vs. the lm, they seemed to run at the same speed. I get the same results.
-%I, Emily, ran as well and there was no difference. So I put in glm just to make it general. 
 
 
 \subsubsection{Running a Parallel Analysis}
@@ -237,9 +234,6 @@ fldl.wk0.p3 <- data.frame(t(out))
 
 \subsection{Summarizing and Visualization}
 
-**Put in Merge stuff
-
-
 We now have a new dataset that contains rsNumbers, Estimates, Standard Errors, Zvalues and Pvalues.
 
 <<data, eval=FALSE>>=
@@ -249,30 +243,18 @@ fldl_wk0_p3 <- as.matrix(fldl_wk0_p3)
 write.csv(fldl_wk0_p3,"/home/ramoser/fldl-wk0_p3")
 @
 
-Our new dataset contains only part of the variables needed to accurately summarize the data. We need to be able to determine which SNP cooresponds to which chromosome, gene and type. To do so we load in a dataset that contains this information for the RS numbers and merge with our existing dataset.   
+Our new dataset contains only part of the variables needed to accurately summarize the data. We need to be able to determine which SNP cooresponds to which chromosome, and where that chromosome is located. To do so we load in a dataset that contains this information for the RS numbers and merge with our existing dataset. Note that the chromosome location, that is the variable coord1, depends on which build you are using. We are currently using build _____.
 
 <<merging, eval= FALSE>>=
 baseline1 <- read.csv("fldl_wk0_p3.txt", header = T)
 baseline1 <- baseline1[, -1]
 
-merge1 <- read.table("2013-08-12-AnnotationSNPsToGenes.txt", sep="\t")
+merge1 <- read.csv("SnpCoord.csv")
 merge1$rsNumber <- merge1$snp
-merge1 <- merge1[, c(1:5,7)]
+merge1 <- merge1[, c(2,3,5)]
 
 baseline2 <- merge(baseline1, merge1, by = "rsNumber")
 
-@
-
-In this case, we are only interested in looking at the following gene types: exonic, intronic, splicing, UTR3, UTR5, downstream, exonic;splicing, and upstream. Thus, we keep only these types and sort by P-values. \\
-
-*Why only these? Is this standard, should I describe each of these gene types? I feel like there is a bit more ``meat" needed here.
-
-<<Types to keep, eval=FALSE>>=
-#Keeping Gene Types:exonic, intronic, splicing, UTR3, UTR5, downstream, exonic;splicing, upstream
-
-keep1 <- c("exonic", "intronic", "splicing", "UTR3", "UTR5", "downstream", "exonic;splicing", "upstream")
-baseline3 <- baseline2[is.element(el=baseline2$type, set=keep1), ]
-baseline3 <- baseline3[order(baseline3$Pvalue),]
 @
 
 In this example we are interested in P-values $< 5*10^{-5}$. Thus, we create a subset of SNPs with those P-values and summarize them in a table. Furthermore, we drop ``chr" to report just chromosome numbers and save the resulting table.
@@ -288,36 +270,32 @@ write.csv(baseline3,"baseline.txt")
 xtable(baseTable)
 @
 
-
-Now that we have a complete dataset with SNPs, chromosome, gene type, etc., we can create a Manhattan Plot to view the data. Below is a function that will create a Manhattan Plot. A Manhattan plot vizualizes where chromosome numbers are displayed along the $x$-axis an  the negative logarithm of the association P-value for each SNP on the Y-axis. This is useful when trying to determine if the association between the SNP and the chromosome is significant.\\
-
-* is chromosome the right word? Or homolog or haplotype?
-*Greg, I can't get this code to actually work. Am I missing something?
+Now that we have a complete dataset with SNPs, chromosome, gene type, etc., we can create a Manhattan Plot to view the data. Below is a function that will create a Manhattan Plot. A Manhattan plot vizualizes where chromosome numbers are displayed along the $x$-axis an  the negative logarithm of the association P-value for each SNP on the Y-axis.\\
 
 <<Manhattan Plot function, eval=FALSE>>=
-one=read.csv("baseline.txt", header=T)
-position=one$Pos/1000000
-chr=one$Chr
-nsnp=as.numeric(table(chr))[1:22]
-pvalue=one$Pvalue
+one<-read.csv("baseline.txt", header=T)
+position<-one$coord1/1000000
+chr<-one$chr
+nsnp<-as.numeric(table(chr))[1:22]
+pvalue<-one$Pvalue
 
-POS=NULL
-POS[1:nsnp[1]]=position[chr==1]
-PVAL=NULL
-PVAL[1:nsnp[1]]=pvalue[chr==1]
-COL=NULL
-COL[1:nsnp[1]]="blue"
-TEXT.POS=NULL
-TEXT.POS[1]=mean(POS)
-for(CHR in 2:22){
-  total.prev=length(POS)
-  start=sort(POS)[total.prev]
-  POS[(total.prev+1):(total.prev+nsnp[CHR])]=start+position[chr==CHR]
-  PVAL[(total.prev+1):(total.prev+nsnp[CHR])]=pvalue[chr==CHR]
-  if(CHR%%2==0){a="lightblue4"}
-  if(CHR%%2==1){a="blue"}
-  COL[(total.prev+1):(total.prev+nsnp[CHR])]=rep(a,nsnp[CHR])
-  TEXT.POS[CHR]=start+mean(position[chr==CHR])
+pos<-NULL
+pos[1:nsnp[1]]<-position[chr==1]
+pval<-NULL
+pval[1:nsnp[1]]<-pvalue[chr==1]
+col<-NULL
+col[1:nsnp[1]]<-"blue"
+TextPos<-NULL
+TextPos[1]<-mean(pos)
+for(chr in 2:22){
+  TotalPrev<-length(pos)
+  start<-sort(pos)[TotalPrev]
+  pos[(TotalPrev + 1):(TotalPrev + nsnp[chr])]<-start + position[chr==chr]
+  pval[(TotalPrev + 1):(TotalPrev + nsnp[chr])]<-pvalue[chr==chr]
+  if(chr%%2==0){a="lightblue4"}
+  if(chr%%2==1){a="blue"}
+  col[(TotalPrev + 1):(TotalPrev + nsnp[chr])]<-rep(a,nsnp[chr])
+  TextPos[chr]<-start + mean(position[chr==chr])
 }
 @
 
@@ -326,11 +304,11 @@ Now, we can creat the Manhattan Plot.
 <<plotting the manhattan, , eval=FALSE>>=
 bitmap(file="manhattan.jpeg",type="jpeg",width=10,height=6,res=432,pointsize=8)
 par(mfrow=c(1,1),las=1,xaxs="i",yaxs="i")
-plot(POS,-log10(PVAL),pch=20,col=COL,xlab="",ylab="-log10(p-value)",axes=F,ylim=c(0,8))
+plot(pos,-log10(pval),pch=20,col=col,xlab="",ylab="-log10(p-value)",axes=F,ylim=c(0,8))
 axis(2)
 abline(h=0)
-text(TEXT.POS,-0.5,seq(1,22,by=1),xpd=TRUE)
-title("LVMASS = SNP + AGE + GENDER")
+text(TextPos,-0.5,seq(1,22,by=1),xpd=TRUE)
+title("Manhattan Plot")
 abline(h=3,col="green")
 abline(h=4,col="orange")
 abline(h=5,col="red")
@@ -339,19 +317,29 @@ abline(h=7,col="cyan")
 dev.off()
 @
 
+\section{Discussion}
 
-\newpage
+\subsection{Gene Based Approaches}
 
-~~~~~~~~~~~~~~~~~THIS IS NOT EDITED YET~~~~~~~~~~~~~~~~~~~~~
+In this case, we are only interested in looking at the following gene types: exonic, intronic, splicing, UTR3, UTR5, downstream, exonic;splicing, and upstream. Thus, we keep only these types and sort by P-values. \\
+
+<<Types to keep, eval=FALSE>>=
+#Keeping Gene Types:exonic, intronic, splicing, UTR3, UTR5, downstream, exonic;splicing, upstream
+
+keep1 <- c("exonic", "intronic", "splicing", "UTR3", "UTR5", "downstream", "exonic;splicing", "upstream")
+baseline3 <- baseline2[is.element(el=baseline2$type, set=keep1), ]
+baseline3 <- baseline3[order(baseline3$Pvalue),]
+@
 
 We can now sort the results by p-value to find our strongest associations.
 
-%<<pvalues>>=
-%fldlwk0<-read.csv("/Users/Eric/Desktop/RA/fldlwk0GWAS")
-%wk0bypval<-fldlwk0[order(fldlwk0$Pvalue),]
-%wk0bypval<-wk0bypval[,-c(1,3,12)] #This is to remove numbered columns added by saving as a ".csv" file
-%wk0bypval[1:10,]
-%@
+<<pvalues, eval=FALSE>>=
+fldlwk0<-read.csv("fldlwk0GWAS")
+wk0bypval<-fldlwk0[order(fldlwk0$Pvalue),]
+wk0bypval<-wk0bypval[,-c(1,3,12)] 
+#This is to remove numbered columns added by saving as a ".csv" file
+wk0bypval[1:10,]
+@
 
 From this GWAS we can see a high level of association between baseline LDL and snp rsNumber, rs7412, on the APOE gene, with a p-value of 2.69e-12.
 
