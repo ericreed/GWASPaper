@@ -31,7 +31,7 @@ This document provides the steps necessary to run a Genome Wide Association Stud
 \section{Introduction}
 \section{Data Files and Pre-Processing}
 
-To analyize the Plink files ($.bim$, $.fam$, $.bed$) in R, the "snpStats" package is required.
+
 
 <<eval=FALSE>>=
 source("http://bioconductor.org/biocLite.R")
@@ -40,19 +40,21 @@ library(snpStats)
 @
 %set working directory?
 \subsection{Data Files}
-\subsection*{The .fam File}
-The .fam file is a matrix that identifies each study participant. It contains 6 columns which identify each individual by ``Family ID Number", ``Sample ID Number",``Paternal ID Number", ``Maternal ID Number", ``Sex", and ``Phenotype".  There are $n$ rows, one for each individual. Note that not all of these columns may contain information depending on the nature of the data collected and the strategies for analysis. In the example to follow, a separate phenotype file will be read in, containing quantified phenotype data.
+In order to perform a genome wide association study, it is essential to obtain genotype data, properly formatted for analysis.  In this example, the "snpStats" package is utlized. The  ``snpStats" package, is an update of the ``snpMatrix" package, and creates a ``snpMatrix" object. It is freely available in R, and contains functions for reading in ``.fam", ``.bed", and ``.bim" files.  These file types, are created from ``.ped" and ``.map" files using, PLINK, an open source software package written in C/C++.  ``.ped" files contain participant identification information, as well as the genotype data for each participant, coded as the first letter of the nucleotide (A,C,T or G).``.map" files contain the rsNumber and information regarding the location of each SNP.  Upon conversion, the  ``.fam" files will contain the participant identification information,``.bed" files will contain a binary version of the genotype data, and the ``.bim" files will contain the same information as the ``.map" files, as well as the nucleotide identifiers (A, C, T, or G) from the ``.ped", files.  
+
+\subsection*{.fam File}
+The .fam file is a 6 column matrix which identifies each participant by ``Family ID Number", ``Sample ID Number",``Paternal ID Number", ``Maternal ID Number", ``Sex", and ``Phenotype".  There is a row for each individual. Note that not all of these columns may contain information depending on the nature of the data collected and the type for analysis. As is often the case when when analyzing quanitfied traits, in the example to follow a separate phenotype file will be read in.
 <<eval=FALSE>>=
 genoFam<-read.table("genodata.fam");colnames(genoFam) = c("FamID","IndID","PatID","MatID","sex","phenotype")
 @
-\subsection*{The .bim File}
-The .bim file is a matrix that provides information about each SNP in our study.  There are 6 colums that contain information for the ``Chromosome Number", ``rsNumber", ``Genetic Distance", ``Position ID", ``Allele 1", ``Allele 2".  There are $n$ rows, one for each SNP in the analysis.  By default, the rsNumbers are read in as factor variables, and will be changed to character variables.
+\subsection*{.bim File}
+The ``.bim" file is a matrix that provides information about each SNP in our study.  There are 6 colums that contain information for the ``Chromosome Number", ``rsNumber", ``Genetic Distance", ``Position ID", ``Allele 1", ``Allele 2".  There is a row for each SNP in the analysis.  By default, the rsNumbers are read in as factor variables, and will be changed to character variables.
 <<eval=FALSE>>=
 genoBim <- read.table("genodata.bim");colnames(genoBim) = c("chr","SNP","GenDist","BPPos","g1","g2")
 genoBim$SNP <- as.character(genoBim$SNP)
 @
-\subsection*{The .bed File}
-The .bed file is a matrix that contains the genotypic data in binary format. It's the result of the conversion of .ped and .map files by the PLINK software. This is the largest of the three files because it contains every SNP in the study, as well as the genotype at this snp for each individual. In order to interpret the binary data, we need to employ the ``read.plink()" function, from the ``snpStats" package, to read in the .fam, .bim, and .bed functions together, and to interpret the binary data in the .bed file and put it into the proper format. The  ``snpStats" package is an update of the ``snpMatrix" package, and creates a ``snpMatrix" object.  We will pull out the ``genotype" slot of this object, which contains the genotype data, stored as a matrix of $p$ columns, one for each SNP by ``rsNumber", and $n$ rows, one for each study participant by ``Family ID Number", containing the genotype of each study participant at each individual SNP, as either ``01", ``02", or ``03".
+\subsection*{.bed File}
+As previously mentioned, the ``.bed" file contains the genotypic data in binary format. This is the largest of the three files because it contains every SNP in the study, as well as the genotype at this snp for each individual. In order to interpret the binary data, we need to employ the ``read.plink()" function from the ``snpStats" package, to read in the ``.fam", ``.bim", and ``.bed" functions together.  We will pull out the ``genotype" slot of this object, which contains the genotype data, stored as a matrix with a column for each SNP, and a row for each study participant by ``Family ID Number", containing the genotype of each study participant at each individual SNP, as either ``01", ``02", or ``03".
 
 
 <<eval=FALSE>>=
@@ -90,17 +92,16 @@ The Hardy-Weingberg Equilibrium is based off the principle that if two alleles a
 $$p+q=1$$
 where $p$ and $q$ represent the probabilities of either allele. Therefore, given the frequency of a certain allele, we should not only be able predict the frequency of the other allele, but also the proportion of homozygous major, heterozygous, and homozygous dominant individuals in a given population  using the formula:
 $$p^2 +2pq+q^2=1$$
-Here, the proportion of the homozygous major genotype is predicted as $p^2$, the hetrozygous genotype is predicted as $2pq$, and the proportion of the homozygous recessive genotype is predicted as $q^2$. Since we cannot expect the observed values of each genotype to precisely match the exected values in our sample, a $\chi^2$-test statistic is used to measure the departure between the expected number of a given genotype and the observed number of a given genotype to obtain a p-value.  If the p-value is above a certain cut-off, we assume that the allele frequencies comply with Hardy-Weinberg Equilibrium. 
+Here, the proportion of the homozygous major genotype is predicted as $p^2$, the hetrozygous genotype is predicted as $2pq$, and the proportion of the homozygous recessive genotype is predicted as $q^2$. Since we cannot expect the observed values of each genotype to precisely match the expected values in our sample, a $\chi^2$-test statistic is used to measure the departure between the expected number of a given genotype and the observed number of a given genotype to obtain a p-value.  If the p-value is greater than a certain cut-off, we assume that the allele frequencies comply with Hardy-Weinberg Equilibrium, and therefore the stringency of Hardy-Weinberg filtering is enhanced by larger p-value cutoffs.
 
-Though Hardy-Weinberg Equilibrium can be violated via population admixture and stratification, and in such cases we would still consider the associations between genotype and phentoype to be informative, they may also occur as a result of genotyping errors.  Therefore, it is common prectice to remove the data for SNPS that violate Hardy-Weinberg Equilibrium. In the following example we have chosen a cutoff p-value of 0.001.  Since we are dealing with multiple comparisons, it is usefule to then divide the p-value by a certain value. A conservative value here would be the total number of SNPs, however in this example we will use a somewhat generous value of 1000.
+  Though Hardy-Weinberg Equilibrium can be violated via population admixture and stratification, and in such cases we would still consider the associations between genotype and phenotype to be informative, they may also occur as a result of genotyping errors.  Therefore, it is common practice to remove the data for SNPS that violate Hardy-Weinberg Equilibrium. In this example we will use a commonly used cutoff of $p<0.001$.
 
 <<eval=FALSE>>=
 call<-0.9
 minor<-0.01
 hardy<-0.001
-comp<-1000
 snpsum.col <- col.summary(geno)
-use <-  (!is.na(snpsum.col$MAF)&snpsum.col$MAF > minor) & (!is.na(snpsum.col$z.HWE)&snpsum.col$z.HWE^2 < qnorm((hardy/2)/comp)^2) & snpsum.col$Call.rate >= call #This creates a Boolean Vector of "TRUE" and "FALSE"
+use <-  (!is.na(snpsum.col$MAF)&snpsum.col$MAF > minor) & (!is.na(snpsum.col$z.HWE)&snpsum.col$z.HWE^2 < qnorm((hardy/2))^2) & snpsum.col$Call.rate >= call #This creates a Boolean Vector of "TRUE" and "FALSE"
 use[is.na(use)] <- FALSE 
 genoBim <- genoBim[use,] #This will filter the .bim file
 geno <- geno[,use] #This will filter our genotype file.
@@ -161,7 +162,7 @@ phenoSub<-merge(phenoSub,pcs,by.x="FamID",by.y="FamID",all.x=TRUE)
 
 \subsection{Fitting the Model}
 
-Multiple methods are used to analyse GWAS data: Linkage analysis, Admixture mapping and Assosciation anaylysis. since we have a high number of SNPs and these subjects are assumed not to be correlated, we will be conducting an Association analysis. Genetic models are used to incorporate the interaction between alleles on homolougous chromosomes. Genetic models commonly used are Additive Models, Dominant Models and Recessive models. \\
+Multiple methods are used to analyse GWAS data: Linkage analysis, Admixture mapping and Association analysis. since we have a high number of SNPs and these subjects are assumed not to be correlated, we will be conducting an Association analysis. Genetic models are used to incorporate the interaction between alleles on homolougous chromosomes. Genetic models commonly used are Additive Models, Dominant Models and Recessive models. \\
 
 \textsc{Additive}\\
 Additive models are used to evaluate additive structure and reveal associations that depend additively based on the allele classification. These models assume that if having a single minor allele will increase the quantitative trait we are interested in, $y$, by $\beta$, then having two minor alleles in the homologs will increase $y$ by $2\beta$. \\
