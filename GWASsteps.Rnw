@@ -27,6 +27,7 @@
 
 \begin{document}
 
+
 This document provides the steps necessary to run a Genome Wide Association Study (GWAS) analysis.
 \section{Introduction}
 \section{Data Files and Pre-Processing}
@@ -40,7 +41,16 @@ library(snpStats)
 @
 %set working directory?
 \subsection{Data Files}
-In order to perform a genome wide association study, it is essential to obtain genotype data, properly formatted for analysis.  In this example, the "snpStats" package is utlized. The  ``snpStats" package, is an update of the ``snpMatrix" package, and creates a ``snpMatrix" object. It is freely available in R, and contains functions for reading in ``.fam", ``.bed", and ``.bim" files.  These file types, are created from ``.ped" and ``.map" files using, PLINK, an open source software package written in C/C++.  ``.ped" files contain participant identification information, as well as the genotype data for each participant, coded as the first letter of the nucleotide (A,C,T or G).``.map" files contain the rsNumber and information regarding the location of each SNP.  Upon conversion, the  ``.fam" files will contain the participant identification information,``.bed" files will contain a binary version of the genotype data, and the ``.bim" files will contain the same information as the ``.map" files, as well as the nucleotide identifiers (A, C, T, or G) from the ``.ped", files.  
+In order to perform a genome wide association study, it is essential to obtain genotype data, properly formatted for analysis.  In this example, the "snpStats" package is utlized. The  ``snpStats" package, is an update of the ``snpMatrix" package, and creates a ``snpMatrix" object. It is freely available in R, and contains functions for reading in ``.fam", ``.bed", and ``.bim" files.  These file types, are created from ``.ped" and ``.map" files using, PLINK, an open source software package written in C/C++.  ``.ped" files contain participant identification information, as well as the genotype data for each participant, coded as the first letter of the nucleotide (A,C,T or G).``.map" files contain the rsNumber and information regarding the location of each SNP.  Upon conversion, the  ``.fam" files will contain the participant identification information,``.bed" files will contain a binary version of the genotype data, and the ``.bim" files will contain the same information as the ``.map" files, as well as the nucleotide identifiers (A, C, T, or G) from the ``.ped", files.  The data contained in each file is demonstrated in figure 1.
+
+\begin{figure}[h]
+\begin{center}
+    \centering
+    \includegraphics[width=1\textwidth]{plinkfig.pdf}
+    \caption{Data Contained in PLINK files}
+    \label{fig:awesome_image}
+\end{center}
+\end{figure}
 
 \subsection*{.fam File}
 The .fam file is a 6 column matrix which identifies each participant by ``Family ID Number", ``Sample ID Number",``Paternal ID Number", ``Maternal ID Number", ``Sex", and ``Phenotype".  There is a row for each individual. Note that not all of these columns may contain information depending on the nature of the data collected and the type for analysis. As is often the case when when analyzing quanitfied traits, in the example to follow a separate phenotype file will be read in.
@@ -113,17 +123,41 @@ Once we have filtered our data using the formatting necessary for the ``snpStats
 <<eval=FALSE>>=
 genoNum<-as(geno,"numeric")
 @
-Our final genotype (``genoNum") matrix contains the genotype for each individual at each individual SNP, stored as either the number of Major or Minor alleles, depending on how the data was originally formatted.  For example, if the data was formatted to count the number of major alleles, the meaning of the genotype data is coded as follows:
+Our final genotype (``genoNum") matrix contains the genotype for each individual at each individual SNP, stored as either the number of Major or Minor alleles, depending on how the data was originally formatted.  For example, if the data was formatted to count the number of major alleles, the meaning of the genotype data is coded as:
 
 \begin{itemize}
+  \item NA $=$ Missing
   \item 0 $=$ Homozygous Minor
   \item 1 $=$ Heterozygous
   \item 2 $=$ Homozygous Major
 \end{itemize}
 
-Make a table one of the columns to make sure the data is formatted correctly.
+Alternatively if it is formatted to count the number of minor alleles, the meaning of the genotype data is coded as:
+\begin{itemize}
+  \item NA $=$ Missing
+  \item 0 $=$ Homozygous Major
+  \item 1 $=$ Heterozygous
+  \item 2 $=$ Homozygous Minor
+\end{itemize}
+
+The latter demononstrates how the genotypes are coded by genome-wide analyses through PLINK. Therefore we will want to recode data that is coded as the former.  
+
 <<eval=FALSE>>=
-table(genoNum[,1])
+flip<-function(x){
+  zero2<-which(x==0)
+  two0<-which(x==2)
+  one1<-which(x==1)
+  mat<-matrix(data=NA, nrow=nrow(x),ncol=ncol(x))
+  rownames(mat)<-rownames(x)
+  colnames(mat)<-colnames(x)
+  mat[zero2]<-2
+  mat[two0]<-0
+  mat[one1]<-1
+  mat}
+
+mafTest<-(2*(sum(genoNum[,1]==0,na.rm=TRUE))+sum(genoNum[,1]==1,na.rm=TRUE))/(2*sum(!is.na(genoNum[,1])))
+mafCalc<-snpsum.col[colnames(genoNum)[1],"MAF"]
+genoNum<-if(mafTest==mafCalc) {flip(genoNum)} else {genoNum}
 @
 \subsection{Principal Components}
 Principal Component Analysis (PCA) is commonly performed, as a means for adjusting for population substructure.  The goal is to account for as most of the genetic variation between the study participants.  This is vital to a GWAS because it allows us to account for varying allele frequencies among populations of various ethnic backgrounds, which could cause confounding, and produce false positive results.
